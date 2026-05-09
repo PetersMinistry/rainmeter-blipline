@@ -1,0 +1,22 @@
+# Local/private Rainmeter runtime data
+Skins/*/@Resources/Cache/*
+!Skins/*/@Resources/Cache/.gitkeep
+
+# Release/build output
+dist/
+*.rmskin
+*.zip
+
+# Local planning and handoff notes
+FUTURE_IMPROVEMENTS.md
+HANDOFF.md
+
+# Git metadata workaround folders used on this Windows machine
+.git-meta/
+.git-disabled-*
+
+# Common local/editor files
+.env
+*.log
+Thumbs.db
+desktop.ini

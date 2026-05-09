@@ -6,7 +6,11 @@
 - Added lightweight auto-paging in the timeline when more events are cached than fit in the visible space.
 - Sorted timed events ahead of all-day entries on the same date so renewal-style all-day items do not crowd out scheduled appointments.
 - Sanitized non-ASCII calendar text before it reaches Rainmeter to avoid mojibake characters in event titles and details.
-- Added `CacheLimit` and `ScrollSeconds` settings for controlling queue depth and page cadence.
+- Added `CacheLimit`, `CachePastDays`, `CacheFutureDays`, and `ScrollStep` settings for controlling timeline depth and wheel navigation.
+- Reworked the agenda model toward a scrollable timeline: the cache now keeps past and future events, and the timeline responds to mouse-wheel scrolling.
+- Replaced Today / 3 Days / Week range controls with Glass / Dense / Focus timeline style presets.
+- Changed Sample into a safer Demo mode that does not clear saved calendar feed URLs.
+- Added a middle-click recenter action on the timeline scroll area to jump back to the current/next event.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

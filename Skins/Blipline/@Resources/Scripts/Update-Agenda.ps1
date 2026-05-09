@@ -493,15 +493,17 @@ function Write-AgendaCache {
 
     $now = Get-Date
     $today = $now.Date
-    $daysAhead = [int](Get-SettingValue -Path $SettingsPath -Name 'DaysAhead' -Default '3')
     $maxRows = [int](Get-SettingValue -Path $SettingsPath -Name 'MaxRows' -Default '6')
     $minRows = [Math]::Max(1, $maxRows)
-    $cacheLimit = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheLimit' -Default '48')
+    $cacheLimit = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheLimit' -Default '240')
     $cacheLimit = [Math]::Max($minRows, $cacheLimit)
-    $windowEnd = $today.AddDays([Math]::Max(1, $daysAhead))
+    $pastDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CachePastDays' -Default '14')
+    $futureDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheFutureDays' -Default '90')
+    $windowStart = $today.AddDays(-[Math]::Max(0, $pastDays))
+    $windowEnd = $today.AddDays([Math]::Max(1, $futureDays))
     $sorted = @(
         $Events |
-            Where-Object { $_.End -ge $now } |
+            Where-Object { $_.End -ge $windowStart -and $_.Start -lt $windowEnd } |
             Sort-Object `
                 @{ Expression = { $_.Start.Date } },
                 @{ Expression = { $_.AllDay } },
@@ -509,12 +511,20 @@ function Write-AgendaCache {
                 @{ Expression = { $_.Calendar } },
                 @{ Expression = { $_.Title } }
     )
-    $inWindow = @($sorted | Where-Object { $_.Start -lt $windowEnd })
-    $afterWindow = @($sorted | Where-Object { $_.Start -ge $windowEnd })
+    $past = @($sorted | Where-Object { $_.End -lt $now })
+    $future = @($sorted | Where-Object { $_.End -ge $now })
+    $pastLimit = [Math]::Min($past.Count, [Math]::Max($maxRows, [Math]::Floor($cacheLimit * 0.25)))
+    $futureLimit = [Math]::Max($maxRows, $cacheLimit - $pastLimit)
+    $timelineEvents = @()
+    if ($pastLimit -gt 0) {
+        $timelineEvents += @($past | Select-Object -Last $pastLimit)
+    }
+    $timelineEvents += @($future | Select-Object -First $futureLimit)
+
     $filtered = @()
     $seen = @{}
 
-    foreach ($event in @($inWindow + $afterWindow)) {
+    foreach ($event in $timelineEvents) {
         $key = '{0}|{1}|{2}' -f (Get-UnixSeconds $event.Start), $event.Title, $event.Calendar
         if ($seen.ContainsKey($key)) {
             continue
@@ -577,11 +587,18 @@ function Write-AgendaCache {
 }
 
 try {
+    $useSample = Get-SettingValue -Path $SettingsPath -Name 'UseSample' -Default '0'
+    if ($useSample -eq '1') {
+        Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Demo data'
+        return
+    }
+
     $feeds = @(Get-CalendarFeeds -Path $SettingsPath)
     $today = (Get-Date).Date
-    $daysAhead = [int](Get-SettingValue -Path $SettingsPath -Name 'DaysAhead' -Default '3')
-    $parseWindowStart = $today.AddDays(-7)
-    $parseWindowEnd = $today.AddDays([Math]::Max(31, $daysAhead + 7))
+    $pastDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CachePastDays' -Default '14')
+    $futureDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheFutureDays' -Default '90')
+    $parseWindowStart = $today.AddDays(-[Math]::Max(7, $pastDays))
+    $parseWindowEnd = $today.AddDays([Math]::Max(31, $futureDays))
 
     if ($feeds.Count -eq 0) {
         Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Sample data'

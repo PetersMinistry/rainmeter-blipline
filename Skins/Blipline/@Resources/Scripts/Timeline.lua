@@ -1,8 +1,12 @@
 local cachePath = nil
 local events = {}
 local lastRead = 0
+local scrollCurrent = 0
+local scrollTarget = 0
+local userScrolled = false
 
-local rowY = {94, 134, 174, 214, 254, 294}
+local rowBaseY = {94, 134, 174, 214, 254, 294}
+local rowGap = 40
 local hiddenColor = '255,255,255,0'
 local mutedColor = '205,214,224,230'
 local activeColor = '255,199,50,255'
@@ -24,6 +28,16 @@ local function read_number_variable(name, fallback, minValue, maxValue)
   if minValue and value < minValue then value = minValue end
   if maxValue and value > maxValue then value = maxValue end
   return math.floor(value)
+end
+
+local function clamp(value, minValue, maxValue)
+  if value < minValue then return minValue end
+  if value > maxValue then return maxValue end
+  return value
+end
+
+local function max_scroll(maxRows)
+  return math.max(0, #events - maxRows)
 end
 
 local function read_cache()
@@ -82,6 +96,7 @@ local function format_countdown(seconds)
 end
 
 local function clear_row(slot)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Y', tostring(rowBaseY[slot] or 94))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', '')
@@ -98,7 +113,8 @@ local function row_time_label(event, headerDate)
   return event.time
 end
 
-local function set_row(slot, event, active, headerDate)
+local function set_row(slot, event, active, headerDate, y)
+  local style = SKIN:GetVariable('TimelineStyle') or 'Glass'
   local textColor = active and '255,226,84,255' or '245,247,252,238'
   local subColor = active and '230,214,156,238' or '170,178,190,226'
   local color = active and activeColor or event.color
@@ -107,7 +123,11 @@ local function set_row(slot, event, active, headerDate)
   if detail ~= '' and event.calendar ~= '' and event.location ~= '' then
     detail = event.calendar .. '  |  ' .. event.location
   end
+  if style == 'Focus' and not active then
+    detail = ''
+  end
 
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Y', tostring(math.floor(y + 0.5)))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', row_time_label(event, headerDate))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', event.title)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', detail)
@@ -115,6 +135,23 @@ local function set_row(slot, event, active, headerDate)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', textColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'SubColor', subColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', active and '12' or '8')
+end
+
+local function apply_style()
+  local style = SKIN:GetVariable('TimelineStyle') or 'Glass'
+  if style == 'Dense' then
+    SKIN:Bang('!SetVariable', 'RowTitleSize', '11')
+    SKIN:Bang('!SetVariable', 'RowSubSize', '8')
+    SKIN:Bang('!SetVariable', 'PanelFill', '10,14,20,166')
+  elseif style == 'Focus' then
+    SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
+    SKIN:Bang('!SetVariable', 'RowSubSize', '8')
+    SKIN:Bang('!SetVariable', 'PanelFill', '8,11,16,178')
+  else
+    SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
+    SKIN:Bang('!SetVariable', 'RowSubSize', '9')
+    SKIN:Bang('!SetVariable', 'PanelFill', '12,16,22,150')
+  end
 end
 
 local function find_selected(now)
@@ -141,13 +178,33 @@ end
 function ReadAgenda()
   read_cache()
   lastRead = os.time()
+  userScrolled = false
   Update()
+end
+
+function Scroll(direction)
+  local maxRows = read_number_variable('MaxRows', 6, 1, 6)
+  local step = read_number_variable('ScrollStep', 1, 1, 6)
+  local amount = tonumber(direction or '0') or 0
+  if amount == 0 then return '' end
+
+  scrollTarget = clamp(scrollTarget + (amount * step), 0, max_scroll(maxRows))
+  scrollCurrent = scrollTarget
+  userScrolled = true
+  Update()
+  return ''
+end
+
+function CenterNow()
+  userScrolled = false
+  Update()
+  return ''
 end
 
 function Update()
   local now = os.time()
   local maxRows = read_number_variable('MaxRows', 6, 1, 6)
-  local scrollSeconds = read_number_variable('ScrollSeconds', 20, 5, 3600)
+  apply_style()
   if now - lastRead > 30 then
     read_cache()
     lastRead = now
@@ -165,31 +222,32 @@ function Update()
     SKIN:Bang('!SetVariable', 'CountdownY', '146')
     for slot = 1, 6 do clear_row(slot) end
   else
-    local startIndex = selected - 2
-    if #events > maxRows then
-      local remaining = #events - selected + 1
-      local pageCount = math.max(1, math.ceil(remaining / maxRows))
-      local page = math.floor(now / scrollSeconds) % pageCount
-      startIndex = selected + (page * maxRows)
-      if startIndex > #events then startIndex = selected end
+    local anchor = clamp(selected - 2, 0, max_scroll(maxRows))
+    if not userScrolled then
+      scrollTarget = anchor
+      scrollCurrent = anchor
     end
 
-    if startIndex < 1 then startIndex = 1 end
-    if #events > maxRows and startIndex > #events - maxRows + 1 then startIndex = math.max(1, #events - maxRows + 1) end
+    scrollTarget = clamp(scrollTarget, 0, max_scroll(maxRows))
+    scrollCurrent = clamp(scrollCurrent, 0, max_scroll(maxRows))
 
+    local startIndex = math.floor(scrollCurrent) + 1
+    local fractional = scrollCurrent - math.floor(scrollCurrent)
     local activeSlot = selected - startIndex + 1
     local selectedVisible = activeSlot >= 1 and activeSlot <= maxRows
-    local pointerSlot = selectedVisible and activeSlot or 1
+    local activeY = rowBaseY[1] + ((selected - 1 - scrollCurrent) * rowGap)
+    local pointerY = clamp(activeY, rowBaseY[1], rowBaseY[maxRows])
 
     local headerDate = events[startIndex].date
     SKIN:Bang('!SetVariable', 'HeaderDate', headerDate)
-    SKIN:Bang('!SetVariable', 'CountdownY', tostring(rowY[pointerSlot] - 20))
-    SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(rowY[pointerSlot] + 8))
+    SKIN:Bang('!SetVariable', 'CountdownY', tostring(math.floor(pointerY - 20 + 0.5)))
+    SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(math.floor(pointerY + 8 + 0.5)))
 
     for slot = 1, 6 do
       local event = events[startIndex + slot - 1]
       if event and slot <= maxRows then
-        set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate)
+        local y = rowBaseY[slot] - (fractional * rowGap)
+        set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate, y)
       else
         clear_row(slot)
       end

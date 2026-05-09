@@ -4,22 +4,24 @@ A Rainmeter agenda timeline for Google Calendar-style iCal feeds.
 
 ## Purpose
 
-Blipline is a practical desktop schedule skin. It shows upcoming agenda items, keeps a next-event countdown visible, and automatically shifts the visible timeline as the day progresses.
+Blipline is a practical desktop schedule skin. It shows calendar items in a scrollable timeline, keeps a next-event countdown visible, and starts centered around the current or next event.
 
 ## Features
 
 - Timeline-style agenda display with a highlighted current or next event.
 - Side countdown tag for the next event or the active event end time.
-- Today, 3 Days, and Week range options.
-- Auto-paged queue when more upcoming events exist than the six visible rows can hold.
+- Mouse-wheel scrolling through cached past and future events.
+- Countdown tag stays clamped within the timeline while pointing at the current/next event position.
 - Sample-data mode when no calendar feed is connected.
-- Settings panel with refresh, sample reset, and up to three private iCal URL entries.
+- Safe Demo mode for sample data without deleting saved calendar feed URLs.
+- Settings panel with refresh, open, demo, visual style, and up to three private iCal URL entries.
 - Google Calendar private iCal / ICS feed support.
 - Merged agenda view across multiple calendar feeds.
 - Calendar names are auto-detected from iCal feeds when available.
 - Basic recurring event expansion for daily, weekly, and monthly iCal rules.
 - Timed events sort ahead of all-day entries on the same date to keep appointment-style schedules readable.
 - 15-minute automatic refresh with manual refresh in settings.
+- Visual style presets currently include Glass, Dense, and Focus.
 
 If no Google Calendar iCal URL is set, the skin generates sample events around the current time so the layout can be tested immediately.
 
@@ -50,13 +52,16 @@ Optional display tuning:
 
 ```ini
 MaxRows=6
-CacheLimit=48
-ScrollSeconds=20
+CacheLimit=240
+CachePastDays=14
+CacheFutureDays=90
+ScrollStep=1
+TimelineStyle=Glass
 ```
 
 Treat that URL as private. Anyone with the secret iCal URL can read that calendar feed.
 
-Use the Sample button to clear all feed URLs and return to demo data.
+Use the Demo button to preview sample data without removing saved feed URLs. Use Refresh to return to live calendar data.
 
 ## Privacy Notes
 

@@ -47,6 +47,20 @@ try {
     Assert-True ($sampleVars['SourceStatus'] -eq 'Sample data') 'Sample mode did not report Sample data.'
     Assert-True ([int]$sampleVars['EventCount'] -ge 6) 'Sample mode produced too few events.'
 
+    $demoSettings = Join-Path $tempRoot 'demo-settings.inc'
+    $demoOutput = Join-Path $tempRoot 'demo-agenda.inc'
+    Set-Content -LiteralPath $demoSettings -Encoding ASCII -Value @(
+        '[Variables]'
+        'UseSample=1'
+        'CalendarUrl=https://example.invalid/private.ics'
+        'CalendarUrl2='
+        'CalendarUrl3='
+    )
+
+    & $scriptPath -SettingsPath $demoSettings -OutputPath $demoOutput
+    $demoVars = Read-CacheVars -Path $demoOutput
+    Assert-True ($demoVars['SourceStatus'] -eq 'Demo data') 'Demo mode did not preserve feed URLs and bypass fetching.'
+
     $today = (Get-Date).Date
     $tomorrow = $today.AddDays(1)
     $dailyStart = $tomorrow.AddHours(9)

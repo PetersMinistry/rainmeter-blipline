@@ -72,6 +72,13 @@ try {
         'LOCATION:Studio A'
         'END:VEVENT'
         'BEGIN:VEVENT'
+        'UID:unicode-1@example.test'
+        ('DTSTART:{0}' -f $tomorrow.AddHours(11).ToString("yyyyMMdd'T'HHmmss"))
+        ('DTEND:{0}' -f $tomorrow.AddHours(12).ToString("yyyyMMdd'T'HHmmss"))
+        'SUMMARY:Coffee & Grace'
+        'LOCATION:Cafe'
+        'END:VEVENT'
+        'BEGIN:VEVENT'
         'UID:single-1@example.test'
         ('DTSTART:{0}' -f $singleStart.ToString("yyyyMMdd'T'HHmmss"))
         ('DTEND:{0}' -f $singleEnd.ToString("yyyyMMdd'T'HHmmss"))
@@ -90,6 +97,12 @@ try {
         ('DTEND:{0}' -f $tomorrow.AddHours(16).ToString("yyyyMMdd'T'HHmmss"))
         'STATUS:CANCELLED'
         'SUMMARY:Cancelled Meeting'
+        'END:VEVENT'
+        'BEGIN:VEVENT'
+        'UID:cancelled-title-1@example.test'
+        ('DTSTART:{0}' -f $tomorrow.AddHours(17).ToString("yyyyMMdd'T'HHmmss"))
+        ('DTEND:{0}' -f $tomorrow.AddHours(18).ToString("yyyyMMdd'T'HHmmss"))
+        'SUMMARY:Cancelled - Old Sync'
         'END:VEVENT'
         'END:VCALENDAR'
     )
@@ -112,9 +125,11 @@ try {
     Assert-True ($feedVars['SourceStatus'] -eq 'Updated 1 feed(s)') 'Fixture feed did not refresh successfully.'
     Assert-True ($feedText -match 'Event\d+Calendar=Fixture Work') 'Calendar name was not auto-detected.'
     Assert-True ($feedText -match 'Daily Standup') 'Recurring daily event was not expanded.'
+    Assert-True ($feedText -match 'Coffee & Grace') 'Special characters were not preserved.'
     Assert-True ($feedText -match 'Client Review') 'Single event was not imported.'
     Assert-True ($feedText -match 'All Day Planning') 'All-day event was not imported.'
     Assert-True ($feedText -notmatch 'Cancelled Meeting') 'Cancelled event was imported.'
+    Assert-True ($feedText -notmatch 'Old Sync') 'Title-level cancelled event was imported.'
     Assert-True ($feedText -notmatch [regex]::Escape($excluded)) 'Excluded recurring date still appeared.'
 
     Write-Host 'Blipline agenda pipeline tests passed.'

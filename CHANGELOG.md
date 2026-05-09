@@ -18,6 +18,8 @@ Documented private calendar URL and generated-cache safety rules.
 Added automatic calendar-name detection from iCal `X-WR-CALNAME` values, with per-feed fallback labels.
 Added basic iCal recurrence expansion for daily, weekly, and monthly rules, plus cancelled-event and EXDATE handling.
 Added `tools\Test-AgendaPipeline.ps1` to verify sample mode and safe fake iCal ingestion without a private calendar URL.
+Switched generated agenda cache output to UTF-8 and filtered title-level cancelled events.
+Added optional `FetchHelperPath` support so a local Python helper can fetch Google iCal feeds when Windows PowerShell HTTPS fails.
 
 ## 0.1.0 Prototype - 2026-05-09
 

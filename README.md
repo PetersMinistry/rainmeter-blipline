@@ -54,6 +54,7 @@ Use the Sample button to clear all feed URLs and return to demo data.
 - Generated agenda cache files are ignored because they may contain event names, locations, and meeting details.
 - The committed `UserSettings.inc` uses blank calendar URLs for safe packaging.
 - If you connect a real calendar in the live Rainmeter skin, avoid copying the repo default `UserSettings.inc` over your live one.
+- `FetchHelperPath` can point to a local Python executable if Windows PowerShell cannot fetch Google Calendar over HTTPS on a specific machine. Leave it blank for packaging.
 
 ## Local Verification
 

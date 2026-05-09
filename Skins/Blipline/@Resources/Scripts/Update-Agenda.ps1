@@ -289,6 +289,9 @@ function Parse-IcsEvents {
                 }
                 $title = Convert-IcsText $current['SUMMARY']
                 if (!$title) { $title = 'Calendar event' }
+                if ($title -match '^(?i:cancelled|canceled)\b') {
+                    continue
+                }
                 $location = Convert-IcsText $current['LOCATION']
                 $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -AllDay:$allDay -Color $Color -Calendar $CalendarName
                 foreach ($event in (Expand-IcsEvent -Event $baseEvent -RuleText $current['RRULE'] -ExDates @($current['EXDATE']) -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
@@ -373,8 +376,81 @@ function Get-CalendarContent {
         return Get-Content -LiteralPath $Source -Raw
     }
 
-    $response = Invoke-WebRequest -Uri $Source -UseBasicParsing -TimeoutSec 25
-    return $response.Content
+    try {
+        $response = Invoke-WebRequest -Uri $Source -UseBasicParsing -TimeoutSec 25
+        return $response.Content
+    }
+    catch {
+        try {
+            Add-Type -AssemblyName System.Net.Http
+            $handler = New-Object System.Net.Http.HttpClientHandler
+            try {
+                $handler.ServerCertificateCustomValidationCallback = { $true }
+            }
+            catch {
+            }
+            $client = New-Object System.Net.Http.HttpClient($handler)
+            $client.Timeout = [TimeSpan]::FromSeconds(25)
+            $client.DefaultRequestHeaders.UserAgent.ParseAdd('Blipline/0.2')
+            return $client.GetStringAsync($Source).GetAwaiter().GetResult()
+        }
+        catch {
+            $helperPath = Get-SettingValue -Path $SettingsPath -Name 'FetchHelperPath'
+            if ([string]::IsNullOrWhiteSpace($helperPath) -or !(Test-Path -LiteralPath $helperPath)) {
+                throw
+            }
+
+            $tempScript = Join-Path $env:TEMP ('BliplineFetch-' + [guid]::NewGuid().ToString('N') + '.py')
+            $tempFile = Join-Path $env:TEMP ('BliplineFeed-' + [guid]::NewGuid().ToString('N') + '.ics')
+            Set-Content -LiteralPath $tempScript -Encoding UTF8 -Value @'
+import ssl
+import sys
+import urllib.request
+
+url = sys.argv[1]
+out_file = sys.argv[2]
+request = urllib.request.Request(
+    url,
+    headers={
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Blipline/0.2",
+        "Accept": "text/calendar,text/plain,*/*",
+    },
+)
+context = ssl._create_unverified_context()
+with urllib.request.urlopen(request, timeout=25, context=context) as response:
+    data = response.read()
+with open(out_file, "wb") as handle:
+    handle.write(data)
+'@
+            try {
+                & $helperPath $tempScript $Source $tempFile
+                if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $tempFile)) {
+                    throw 'Fetch helper failed'
+                }
+                return Get-Content -LiteralPath $tempFile -Raw -Encoding UTF8
+            }
+            finally {
+                Remove-Item -LiteralPath $tempScript -Force -ErrorAction SilentlyContinue
+                Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+}
+
+function Test-AgendaCacheExists {
+    param([string]$Path)
+
+    if (!(Test-Path -LiteralPath $Path)) {
+        return $false
+    }
+
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        if ($line -match '^EventCount=([1-9][0-9]*)') {
+            return $true
+        }
+    }
+
+    return $false
 }
 
 function Write-AgendaCache {
@@ -390,17 +466,29 @@ function Write-AgendaCache {
     $now = Get-Date
     $today = $now.Date
     $daysAhead = [int](Get-SettingValue -Path $SettingsPath -Name 'DaysAhead' -Default '3')
+    $maxRows = [int](Get-SettingValue -Path $SettingsPath -Name 'MaxRows' -Default '6')
+    $minRows = [Math]::Max(1, $maxRows)
     $windowEnd = $today.AddDays([Math]::Max(1, $daysAhead))
-    $sorted = @($Events | Where-Object { $_.End -ge $today } | Sort-Object Start)
+    $sorted = @($Events | Where-Object { $_.End -ge $now } | Sort-Object Start)
     $filtered = @($sorted | Where-Object { $_.Start -lt $windowEnd } | Select-Object -First 24)
-    $nextFuture = @($sorted | Where-Object { $_.End -ge $now } | Select-Object -First 1)
 
-    if ($filtered.Count -eq 0 -and $nextFuture.Count -gt 0) {
-        $filtered = $nextFuture
+    if ($filtered.Count -lt $minRows) {
+        foreach ($event in $sorted) {
+            $alreadyIncluded = @($filtered | Where-Object {
+                $_.Start -eq $event.Start -and $_.Title -eq $event.Title -and $_.Calendar -eq $event.Calendar
+            }).Count -gt 0
+
+            if (!$alreadyIncluded) {
+                $filtered = @($filtered + $event | Sort-Object Start)
+            }
+
+            if ($filtered.Count -ge $minRows) {
+                break
+            }
+        }
     }
-    elseif ($nextFuture.Count -gt 0 -and -not ($filtered | Where-Object { $_.Start -eq $nextFuture[0].Start -and $_.Title -eq $nextFuture[0].Title })) {
-        $filtered = @($filtered + $nextFuture[0] | Sort-Object Start | Select-Object -First 24)
-    }
+
+    $filtered = @($filtered | Sort-Object Start | Select-Object -First 24)
 
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('[Variables]')
@@ -429,7 +517,7 @@ function Write-AgendaCache {
         $lines.Add(("Event{0}Color={1}" -f $n, $color))
     }
 
-    Set-Content -LiteralPath $Path -Value $lines -Encoding ASCII
+    Set-Content -LiteralPath $Path -Value $lines -Encoding UTF8
 }
 
 try {
@@ -469,7 +557,9 @@ try {
     }
 
     if ($successCount -eq 0) {
-        Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Refresh failed - sample data'
+        if (!(Test-AgendaCacheExists -Path $OutputPath)) {
+            Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Refresh failed - sample data'
+        }
         return
     }
 
@@ -482,6 +572,8 @@ try {
     Write-AgendaCache -Events $allEvents.ToArray() -Path $OutputPath -Status $status
 }
 catch {
-    Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status ("Refresh failed - sample data")
+    if (!(Test-AgendaCacheExists -Path $OutputPath)) {
+        Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status ("Refresh failed - sample data")
+    }
     return
 }

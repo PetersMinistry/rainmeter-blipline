@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Increased the generated agenda cache beyond the six visible rows so dense calendars have enough upcoming events for paging.
+- Added lightweight auto-paging in the timeline when more events are cached than fit in the visible space.
+- Sorted timed events ahead of all-day entries on the same date so renewal-style all-day items do not crowd out scheduled appointments.
+- Sanitized non-ASCII calendar text before it reaches Rainmeter to avoid mojibake characters in event titles and details.
+- Added `CacheLimit` and `ScrollSeconds` settings for controlling queue depth and page cadence.
+
 ## 0.2.0 Working Prototype - 2026-05-09
 
 Working local MVP checkpoint.

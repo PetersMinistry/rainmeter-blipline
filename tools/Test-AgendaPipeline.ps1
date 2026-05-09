@@ -55,9 +55,20 @@ try {
     $singleStart = $tomorrow.AddHours(13)
     $singleEnd = $tomorrow.AddHours(14)
     $allDay = $tomorrow.AddDays(2).ToString('yyyyMMdd')
+    $extraEvents = for ($i = 1; $i -le 8; $i++) {
+        $extraStart = $tomorrow.AddDays(3).AddHours(8 + $i)
+        @(
+            'BEGIN:VEVENT'
+            ('UID:extra-{0}@example.test' -f $i)
+            ('DTSTART:{0}' -f $extraStart.ToString("yyyyMMdd'T'HHmmss"))
+            ('DTEND:{0}' -f $extraStart.AddMinutes(30).ToString("yyyyMMdd'T'HHmmss"))
+            ('SUMMARY:Extra Event {0}' -f $i)
+            'END:VEVENT'
+        )
+    }
 
     $fixturePath = Join-Path $tempRoot 'fixture.ics'
-    Set-Content -LiteralPath $fixturePath -Encoding ASCII -Value @(
+    $fixtureLines = @(
         'BEGIN:VCALENDAR'
         'VERSION:2.0'
         'PRODID:-//PetersMinistry//Blipline Test//EN'
@@ -75,7 +86,7 @@ try {
         'UID:unicode-1@example.test'
         ('DTSTART:{0}' -f $tomorrow.AddHours(11).ToString("yyyyMMdd'T'HHmmss"))
         ('DTEND:{0}' -f $tomorrow.AddHours(12).ToString("yyyyMMdd'T'HHmmss"))
-        'SUMMARY:Coffee & Grace'
+        ('SUMMARY:Coffee {0} & Grace {1}Check{2}' -f [char]0x2615, [char]0x201C, [char]0x201D)
         'LOCATION:Cafe'
         'END:VEVENT'
         'BEGIN:VEVENT'
@@ -104,8 +115,8 @@ try {
         ('DTEND:{0}' -f $tomorrow.AddHours(18).ToString("yyyyMMdd'T'HHmmss"))
         'SUMMARY:Cancelled - Old Sync'
         'END:VEVENT'
-        'END:VCALENDAR'
-    )
+    ) + $extraEvents + @('END:VCALENDAR')
+    Set-Content -LiteralPath $fixturePath -Encoding UTF8 -Value $fixtureLines
 
     $feedSettings = Join-Path $tempRoot 'feed-settings.inc'
     $feedOutput = Join-Path $tempRoot 'feed-agenda.inc'
@@ -123,9 +134,11 @@ try {
     $feedText = Get-Content -LiteralPath $feedOutput -Raw
     $feedVars = Read-CacheVars -Path $feedOutput
     Assert-True ($feedVars['SourceStatus'] -eq 'Updated 1 feed(s)') 'Fixture feed did not refresh successfully.'
+    Assert-True ([int]$feedVars['EventCount'] -gt 6) 'Fixture feed was trimmed to the visible row count.'
     Assert-True ($feedText -match 'Event\d+Calendar=Fixture Work') 'Calendar name was not auto-detected.'
     Assert-True ($feedText -match 'Daily Standup') 'Recurring daily event was not expanded.'
-    Assert-True ($feedText -match 'Coffee & Grace') 'Special characters were not preserved.'
+    Assert-True ($feedText -match 'Coffee & Grace "Check"') 'Display text was not sanitized cleanly.'
+    Assert-True ($feedText -notmatch '[^\x00-\x7F]') 'Non-ASCII display characters leaked into the Rainmeter cache.'
     Assert-True ($feedText -match 'Client Review') 'Single event was not imported.'
     Assert-True ($feedText -match 'All Day Planning') 'All-day event was not imported.'
     Assert-True ($feedText -notmatch 'Cancelled Meeting') 'Cancelled event was imported.'

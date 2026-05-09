@@ -33,6 +33,33 @@ function Convert-IcsText {
     return $Text.Replace('\n', ' ').Replace('\N', ' ').Replace('\,', ',').Replace('\;', ';').Replace('\\', '\').Trim()
 }
 
+function Convert-DisplayText {
+    param([string]$Text)
+
+    $clean = Convert-IcsText $Text
+    if ([string]::IsNullOrWhiteSpace($clean)) {
+        return ''
+    }
+
+    $clean = $clean.Replace([char]0x2018, "'").Replace([char]0x2019, "'")
+    $clean = $clean.Replace([char]0x201C, '"').Replace([char]0x201D, '"')
+    $clean = $clean.Replace([char]0x2013, '-').Replace([char]0x2014, '-')
+    $clean = $clean.Replace(([char]0x2026).ToString(), '...')
+
+    $builder = New-Object System.Text.StringBuilder
+    foreach ($char in $clean.ToCharArray()) {
+        $code = [int][char]$char
+        if ($code -ge 32 -and $code -le 126) {
+            [void]$builder.Append($char)
+        }
+        elseif ($code -ge 160) {
+            [void]$builder.Append(' ')
+        }
+    }
+
+    return (($builder.ToString() -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
+}
+
 function Convert-IcsDate {
     param([string]$Value)
 
@@ -237,6 +264,7 @@ function Get-SampleEvents {
         New-EventObject -Start $next.AddHours(5) -End $next.AddHours(5.5) -Title 'Client Call' -Location '' -AllDay:$false -Color '126,220,117,245' -Calendar 'Clients'
         New-EventObject -Start $next.AddHours(7.5) -End $next.AddHours(8) -Title 'Wrap Up' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
         New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(9) -End (Get-Date).Date.AddDays(1).AddHours(10) -Title 'Tomorrow Planning' -Location '' -AllDay:$false -Color '238,120,150,245' -Calendar 'Planning'
+        New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(14) -End (Get-Date).Date.AddDays(1).AddHours(14).AddMinutes(45) -Title 'Follow-up Window' -Location '' -AllDay:$false -Color '104,170,255,245' -Calendar 'Planning'
     )
 }
 
@@ -468,27 +496,48 @@ function Write-AgendaCache {
     $daysAhead = [int](Get-SettingValue -Path $SettingsPath -Name 'DaysAhead' -Default '3')
     $maxRows = [int](Get-SettingValue -Path $SettingsPath -Name 'MaxRows' -Default '6')
     $minRows = [Math]::Max(1, $maxRows)
+    $cacheLimit = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheLimit' -Default '48')
+    $cacheLimit = [Math]::Max($minRows, $cacheLimit)
     $windowEnd = $today.AddDays([Math]::Max(1, $daysAhead))
-    $sorted = @($Events | Where-Object { $_.End -ge $now } | Sort-Object Start)
-    $filtered = @($sorted | Where-Object { $_.Start -lt $windowEnd } | Select-Object -First 24)
+    $sorted = @(
+        $Events |
+            Where-Object { $_.End -ge $now } |
+            Sort-Object `
+                @{ Expression = { $_.Start.Date } },
+                @{ Expression = { $_.AllDay } },
+                @{ Expression = { $_.Start } },
+                @{ Expression = { $_.Calendar } },
+                @{ Expression = { $_.Title } }
+    )
+    $inWindow = @($sorted | Where-Object { $_.Start -lt $windowEnd })
+    $afterWindow = @($sorted | Where-Object { $_.Start -ge $windowEnd })
+    $filtered = @()
+    $seen = @{}
 
-    if ($filtered.Count -lt $minRows) {
-        foreach ($event in $sorted) {
-            $alreadyIncluded = @($filtered | Where-Object {
-                $_.Start -eq $event.Start -and $_.Title -eq $event.Title -and $_.Calendar -eq $event.Calendar
-            }).Count -gt 0
+    foreach ($event in @($inWindow + $afterWindow)) {
+        $key = '{0}|{1}|{2}' -f (Get-UnixSeconds $event.Start), $event.Title, $event.Calendar
+        if ($seen.ContainsKey($key)) {
+            continue
+        }
 
-            if (!$alreadyIncluded) {
-                $filtered = @($filtered + $event | Sort-Object Start)
-            }
+        $seen[$key] = $true
+        $filtered = @($filtered + $event)
 
-            if ($filtered.Count -ge $minRows) {
-                break
-            }
+        if ($filtered.Count -ge $cacheLimit) {
+            break
         }
     }
 
-    $filtered = @($filtered | Sort-Object Start | Select-Object -First 24)
+    $filtered = @(
+        $filtered |
+            Sort-Object `
+                @{ Expression = { $_.Start.Date } },
+                @{ Expression = { $_.AllDay } },
+                @{ Expression = { $_.Start } },
+                @{ Expression = { $_.Calendar } },
+                @{ Expression = { $_.Title } } |
+            Select-Object -First $cacheLimit
+    )
 
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('[Variables]')
@@ -504,10 +553,17 @@ function Write-AgendaCache {
         $time = if ($event.AllDay) { 'All day' } else { $event.Start.ToString('h:mm tt') }
         $endTime = if ($event.AllDay) { '' } else { $event.End.ToString('h:mm tt') }
         $dateLabel = $event.Start.ToString('ddd  dd MMM').ToUpperInvariant()
+        $title = Convert-DisplayText $event.Title
+        $location = Convert-DisplayText $event.Location
+        $calendar = Convert-DisplayText $event.Calendar
 
-        $lines.Add(("Event{0}Title={1}" -f $n, ($event.Title -replace '[\r\n=]', ' ')))
-        $lines.Add(("Event{0}Location={1}" -f $n, ($event.Location -replace '[\r\n=]', ' ')))
-        $lines.Add(("Event{0}Calendar={1}" -f $n, ($event.Calendar -replace '[\r\n=]', ' ')))
+        if ([string]::IsNullOrWhiteSpace($title)) {
+            $title = '(Untitled)'
+        }
+
+        $lines.Add(("Event{0}Title={1}" -f $n, $title))
+        $lines.Add(("Event{0}Location={1}" -f $n, $location))
+        $lines.Add(("Event{0}Calendar={1}" -f $n, $calendar))
         $lines.Add(("Event{0}Time={1}" -f $n, $time))
         $lines.Add(("Event{0}EndTime={1}" -f $n, $endTime))
         $lines.Add(("Event{0}Date={1}" -f $n, $dateLabel))

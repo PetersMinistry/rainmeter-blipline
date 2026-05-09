@@ -11,12 +11,14 @@ Blipline is a practical desktop schedule skin. It shows upcoming agenda items, k
 - Timeline-style agenda display with a highlighted current or next event.
 - Side countdown tag for the next event or the active event end time.
 - Today, 3 Days, and Week range options.
+- Auto-paged queue when more upcoming events exist than the six visible rows can hold.
 - Sample-data mode when no calendar feed is connected.
 - Settings panel with refresh, sample reset, and up to three private iCal URL entries.
 - Google Calendar private iCal / ICS feed support.
 - Merged agenda view across multiple calendar feeds.
 - Calendar names are auto-detected from iCal feeds when available.
 - Basic recurring event expansion for daily, weekly, and monthly iCal rules.
+- Timed events sort ahead of all-day entries on the same date to keep appointment-style schedules readable.
 - 15-minute automatic refresh with manual refresh in settings.
 
 If no Google Calendar iCal URL is set, the skin generates sample events around the current time so the layout can be tested immediately.
@@ -42,6 +44,14 @@ Set:
 
 ```ini
 CalendarUrl=https://calendar.google.com/calendar/ical/...
+```
+
+Optional display tuning:
+
+```ini
+MaxRows=6
+CacheLimit=48
+ScrollSeconds=20
 ```
 
 Treat that URL as private. Anyone with the secret iCal URL can read that calendar feed.

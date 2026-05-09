@@ -19,6 +19,13 @@ local function trim(value)
   return (value or ''):gsub('^%s+', ''):gsub('%s+$', '')
 end
 
+local function read_number_variable(name, fallback, minValue, maxValue)
+  local value = tonumber(SKIN:GetVariable(name) or '') or fallback
+  if minValue and value < minValue then value = minValue end
+  if maxValue and value > maxValue then value = maxValue end
+  return math.floor(value)
+end
+
 local function read_cache()
   local text = read_file(cachePath)
   if not text then return end
@@ -139,6 +146,8 @@ end
 
 function Update()
   local now = os.time()
+  local maxRows = read_number_variable('MaxRows', 6, 1, 6)
+  local scrollSeconds = read_number_variable('ScrollSeconds', 20, 5, 3600)
   if now - lastRead > 30 then
     read_cache()
     lastRead = now
@@ -157,22 +166,30 @@ function Update()
     for slot = 1, 6 do clear_row(slot) end
   else
     local startIndex = selected - 2
+    if #events > maxRows then
+      local remaining = #events - selected + 1
+      local pageCount = math.max(1, math.ceil(remaining / maxRows))
+      local page = math.floor(now / scrollSeconds) % pageCount
+      startIndex = selected + (page * maxRows)
+      if startIndex > #events then startIndex = selected end
+    end
+
     if startIndex < 1 then startIndex = 1 end
-    if #events > 6 and startIndex > #events - 5 then startIndex = #events - 5 end
+    if #events > maxRows and startIndex > #events - maxRows + 1 then startIndex = math.max(1, #events - maxRows + 1) end
 
     local activeSlot = selected - startIndex + 1
-    if activeSlot < 1 then activeSlot = 1 end
-    if activeSlot > 6 then activeSlot = 6 end
+    local selectedVisible = activeSlot >= 1 and activeSlot <= maxRows
+    local pointerSlot = selectedVisible and activeSlot or 1
 
-    local headerDate = events[selected].date
+    local headerDate = events[startIndex].date
     SKIN:Bang('!SetVariable', 'HeaderDate', headerDate)
-    SKIN:Bang('!SetVariable', 'CountdownY', tostring(rowY[activeSlot] - 20))
-    SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(rowY[activeSlot] + 8))
+    SKIN:Bang('!SetVariable', 'CountdownY', tostring(rowY[pointerSlot] - 20))
+    SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(rowY[pointerSlot] + 8))
 
     for slot = 1, 6 do
       local event = events[startIndex + slot - 1]
-      if event then
-        set_row(slot, event, startIndex + slot - 1 == selected, headerDate)
+      if event and slot <= maxRows then
+        set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate)
       else
         clear_row(slot)
       end

@@ -46,6 +46,13 @@ Treat that URL as private. Anyone with the secret iCal URL can read that calenda
 
 Use the Sample button to clear all feed URLs and return to demo data.
 
+## Privacy Notes
+
+- Private iCal URLs are not committed to this repo.
+- Generated agenda cache files are ignored because they may contain event names, locations, and meeting details.
+- The committed `UserSettings.inc` uses blank calendar URLs for safe packaging.
+- If you connect a real calendar in the live Rainmeter skin, avoid copying the repo default `UserSettings.inc` over your live one.
+
 ## Status
 
 Early beta prototype. Not packaged for release yet.

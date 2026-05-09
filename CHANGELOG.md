@@ -10,6 +10,7 @@ Added MVP multi-calendar support for up to three private iCal feeds, including p
 Expanded the settings panel to show three feed paste fields while keeping Sample as a one-click reset back to demo data.
 Made the refresh interval explicit for Rainmeter and added refresh cadence text to the settings panel.
 Added compact day labels on timeline rows when a visible event is outside the active header date.
+Documented private calendar URL and generated-cache safety rules.
 
 ## 0.1.0 Prototype - 2026-05-09
 

@@ -7,6 +7,7 @@ CalendarName2=Calendar 2
 CalendarName3=Calendar 3
 DaysAhead=3
 RefreshMinutes=15
+RefreshSeconds=900
 MaxRows=6
 OpenCalendarUrl=https://calendar.google.com/calendar/u/0/r
 AccentColor=255,199,50,255

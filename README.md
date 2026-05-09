@@ -15,6 +15,7 @@ Blipline is a practical desktop schedule skin. It shows upcoming agenda items, k
 - Settings panel with refresh, sample reset, and up to three private iCal URL entries.
 - Google Calendar private iCal / ICS feed support.
 - Merged agenda view across multiple calendar feeds.
+- 15-minute automatic refresh with manual refresh in settings.
 
 If no Google Calendar iCal URL is set, the skin generates sample events around the current time so the layout can be tested immediately.
 

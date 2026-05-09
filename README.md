@@ -14,11 +14,15 @@ Blipline is a practical desktop schedule skin. It shows calendar items in a scro
 - Countdown tag stays clamped within the timeline while pointing at the current/next event position.
 - Sample-data mode when no calendar feed is connected.
 - Safe Demo mode for sample data without deleting saved calendar feed URLs.
-- Settings panel with refresh, open, demo, visual style, and up to three private iCal URL entries.
+- Settings panel with refresh, open, demo, visual style, three visible private iCal URL entries, and per-feed color dots.
 - Google Calendar private iCal / ICS feed support.
+- Up to eight iCal feed slots are supported in `UserSettings.inc`; the current setup panel exposes the first three.
 - Merged agenda view across multiple calendar feeds.
 - Calendar names are auto-detected from iCal feeds when available.
+- Calendar colors are auto-detected when a feed publishes color metadata, otherwise Blipline uses the configured feed colors.
 - Basic recurring event expansion for daily, weekly, and monthly iCal rules.
+- Event descriptions/notes are imported for richer Dense display.
+- Unicode and emoji in event titles/details are preserved.
 - Timed events sort ahead of all-day entries on the same date to keep appointment-style schedules readable.
 - 15-minute automatic refresh with manual refresh in settings.
 - Visual style presets currently include Glass, Dense, and Focus.
@@ -57,6 +61,8 @@ CachePastDays=14
 CacheFutureDays=90
 ScrollStep=1
 TimelineStyle=Glass
+CalendarSlots=8
+CalendarColor1=255,199,50,255
 ```
 
 Treat that URL as private. Anyone with the secret iCal URL can read that calendar feed.

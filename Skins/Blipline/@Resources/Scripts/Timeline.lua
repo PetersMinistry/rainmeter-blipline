@@ -60,6 +60,7 @@ local function read_cache()
     table.insert(events, {
       title = vars['Event' .. i .. 'Title'] or '',
       location = vars['Event' .. i .. 'Location'] or '',
+      notes = vars['Event' .. i .. 'Notes'] or '',
       calendar = vars['Event' .. i .. 'Calendar'] or '',
       time = vars['Event' .. i .. 'Time'] or '',
       endTime = vars['Event' .. i .. 'EndTime'] or '',
@@ -118,10 +119,13 @@ local function set_row(slot, event, active, headerDate, y)
   local textColor = active and '255,226,84,255' or '245,247,252,238'
   local subColor = active and '230,214,156,238' or '170,178,190,226'
   local color = active and activeColor or event.color
-  local detail = event.location
-  if detail == '' then detail = event.calendar end
-  if detail ~= '' and event.calendar ~= '' and event.location ~= '' then
-    detail = event.calendar .. '  |  ' .. event.location
+  local detailParts = {}
+  if event.calendar ~= '' then table.insert(detailParts, event.calendar) end
+  if event.location ~= '' then table.insert(detailParts, event.location) end
+  if style == 'Dense' and event.notes ~= '' then table.insert(detailParts, event.notes) end
+  local detail = table.concat(detailParts, '  |  ')
+  if detail == '' then
+    detail = event.location
   end
   if style == 'Focus' and not active then
     detail = ''
@@ -140,16 +144,22 @@ end
 local function apply_style()
   local style = SKIN:GetVariable('TimelineStyle') or 'Glass'
   if style == 'Dense' then
-    SKIN:Bang('!SetVariable', 'RowTitleSize', '11')
+    SKIN:Bang('!SetVariable', 'RowTitleSize', '10')
     SKIN:Bang('!SetVariable', 'RowSubSize', '8')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '238')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '246')
     SKIN:Bang('!SetVariable', 'PanelFill', '10,14,20,166')
   elseif style == 'Focus' then
     SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
     SKIN:Bang('!SetVariable', 'RowSubSize', '8')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '238')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '246')
     SKIN:Bang('!SetVariable', 'PanelFill', '8,11,16,178')
   else
     SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
     SKIN:Bang('!SetVariable', 'RowSubSize', '9')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '238')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '246')
     SKIN:Bang('!SetVariable', 'PanelFill', '12,16,22,150')
   end
 end

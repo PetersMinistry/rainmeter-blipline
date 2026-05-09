@@ -41,23 +41,40 @@ function Convert-DisplayText {
         return ''
     }
 
-    $clean = $clean.Replace([char]0x2018, "'").Replace([char]0x2019, "'")
-    $clean = $clean.Replace([char]0x201C, '"').Replace([char]0x201D, '"')
-    $clean = $clean.Replace([char]0x2013, '-').Replace([char]0x2014, '-')
-    $clean = $clean.Replace(([char]0x2026).ToString(), '...')
+    return (($clean -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
+}
 
-    $builder = New-Object System.Text.StringBuilder
-    foreach ($char in $clean.ToCharArray()) {
-        $code = [int][char]$char
-        if ($code -ge 32 -and $code -le 126) {
-            [void]$builder.Append($char)
-        }
-        elseif ($code -ge 160) {
-            [void]$builder.Append(' ')
-        }
+function Convert-HexColorToRainmeter {
+    param([string]$Color)
+
+    if ([string]::IsNullOrWhiteSpace($Color)) {
+        return ''
     }
 
-    return (($builder.ToString() -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
+    $clean = $Color.Trim()
+    if ($clean -match '^#?([0-9A-Fa-f]{6})$') {
+        $hex = $matches[1]
+        $r = [Convert]::ToInt32($hex.Substring(0, 2), 16)
+        $g = [Convert]::ToInt32($hex.Substring(2, 2), 16)
+        $b = [Convert]::ToInt32($hex.Substring(4, 2), 16)
+        return "$r,$g,$b,255"
+    }
+
+    return ''
+}
+
+function Convert-BytesToText {
+    param([byte[]]$Bytes)
+
+    if ($null -eq $Bytes -or $Bytes.Count -eq 0) {
+        return ''
+    }
+
+    if ($Bytes.Count -ge 3 -and $Bytes[0] -eq 239 -and $Bytes[1] -eq 187 -and $Bytes[2] -eq 191) {
+        return [Text.Encoding]::UTF8.GetString($Bytes, 3, $Bytes.Count - 3)
+    }
+
+    return [Text.Encoding]::UTF8.GetString($Bytes)
 }
 
 function Convert-IcsDate {
@@ -139,7 +156,7 @@ function New-ShiftedEvent {
     )
 
     $duration = $Event.End - $Event.Start
-    New-EventObject -Start $Start -End $Start.Add($duration) -Title $Event.Title -Location $Event.Location -AllDay:$Event.AllDay -Color $Event.Color -Calendar $Event.Calendar
+    New-EventObject -Start $Start -End $Start.Add($duration) -Title $Event.Title -Location $Event.Location -Notes $Event.Notes -AllDay:$Event.AllDay -Color $Event.Color -Calendar $Event.Calendar
 }
 
 function Expand-IcsEvent {
@@ -234,6 +251,7 @@ function New-EventObject {
         [datetime]$End,
         [string]$Title,
         [string]$Location,
+        [string]$Notes,
         [bool]$AllDay,
         [string]$Color,
         [string]$Calendar
@@ -244,6 +262,7 @@ function New-EventObject {
         End = $End
         Title = $Title
         Location = $Location
+        Notes = $Notes
         AllDay = $AllDay
         Color = $Color
         Calendar = $Calendar
@@ -256,15 +275,15 @@ function Get-SampleEvents {
     $next = $now.AddMinutes(15)
 
     @(
-        New-EventObject -Start $base.AddHours(-2) -End $base.AddHours(-1).AddMinutes(-15) -Title 'Morning Focus' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
-        New-EventObject -Start $base.AddHours(-1) -End $base.AddMinutes(-15) -Title 'Deep Work' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
-        New-EventObject -Start $next -End $next.AddMinutes(45) -Title 'Team Sync' -Location 'Conference Room A' -AllDay:$false -Color '255,199,50,255' -Calendar 'Work'
-        New-EventObject -Start $next.AddHours(1.5) -End $next.AddHours(2.25) -Title 'Lunch' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Personal'
-        New-EventObject -Start $next.AddHours(3) -End $next.AddHours(4) -Title 'Design Review' -Location 'Studio call' -AllDay:$false -Color '104,170,255,245' -Calendar 'Work'
-        New-EventObject -Start $next.AddHours(5) -End $next.AddHours(5.5) -Title 'Client Call' -Location '' -AllDay:$false -Color '126,220,117,245' -Calendar 'Clients'
-        New-EventObject -Start $next.AddHours(7.5) -End $next.AddHours(8) -Title 'Wrap Up' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
-        New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(9) -End (Get-Date).Date.AddDays(1).AddHours(10) -Title 'Tomorrow Planning' -Location '' -AllDay:$false -Color '238,120,150,245' -Calendar 'Planning'
-        New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(14) -End (Get-Date).Date.AddDays(1).AddHours(14).AddMinutes(45) -Title 'Follow-up Window' -Location '' -AllDay:$false -Color '104,170,255,245' -Calendar 'Planning'
+        New-EventObject -Start $base.AddHours(-2) -End $base.AddHours(-1).AddMinutes(-15) -Title 'Morning Focus' -Location '' -Notes '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
+        New-EventObject -Start $base.AddHours(-1) -End $base.AddMinutes(-15) -Title 'Deep Work' -Location '' -Notes '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
+        New-EventObject -Start $next -End $next.AddMinutes(45) -Title '✝ Team Sync' -Location 'Conference Room A' -Notes 'Bring the weekly notes.' -AllDay:$false -Color '255,199,50,255' -Calendar 'Work'
+        New-EventObject -Start $next.AddHours(1.5) -End $next.AddHours(2.25) -Title 'Lunch' -Location '' -Notes '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Personal'
+        New-EventObject -Start $next.AddHours(3) -End $next.AddHours(4) -Title '📖 Design Review' -Location 'Studio call' -Notes 'Review the visual pass.' -AllDay:$false -Color '104,170,255,245' -Calendar 'Work'
+        New-EventObject -Start $next.AddHours(5) -End $next.AddHours(5.5) -Title 'Client Call' -Location '' -Notes '' -AllDay:$false -Color '126,220,117,245' -Calendar 'Clients'
+        New-EventObject -Start $next.AddHours(7.5) -End $next.AddHours(8) -Title 'Wrap Up' -Location '' -Notes '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
+        New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(9) -End (Get-Date).Date.AddDays(1).AddHours(10) -Title 'Tomorrow Planning' -Location '' -Notes '' -AllDay:$false -Color '238,120,150,245' -Calendar 'Planning'
+        New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(14) -End (Get-Date).Date.AddDays(1).AddHours(14).AddMinutes(45) -Title 'Follow-up Window' -Location '' -Notes '' -AllDay:$false -Color '104,170,255,245' -Calendar 'Planning'
     )
 }
 
@@ -321,7 +340,8 @@ function Parse-IcsEvents {
                     continue
                 }
                 $location = Convert-IcsText $current['LOCATION']
-                $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -AllDay:$allDay -Color $Color -Calendar $CalendarName
+                $notes = Convert-IcsText $current['DESCRIPTION']
+                $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -Notes $notes -AllDay:$allDay -Color $Color -Calendar $CalendarName
                 foreach ($event in (Expand-IcsEvent -Event $baseEvent -RuleText $current['RRULE'] -ExDates @($current['EXDATE']) -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
                     $events.Add($event)
                 }
@@ -343,7 +363,7 @@ function Parse-IcsEvents {
         elseif ($name -eq 'DTEND') {
             $current['DTEND'] = $value
         }
-        elseif ($name -eq 'SUMMARY' -or $name -eq 'LOCATION') {
+        elseif ($name -eq 'SUMMARY' -or $name -eq 'LOCATION' -or $name -eq 'DESCRIPTION') {
             $current[$name] = $value
         }
         elseif ($name -eq 'STATUS' -or $name -eq 'RRULE') {
@@ -377,20 +397,53 @@ function Get-IcsCalendarName {
     return ''
 }
 
+function Get-IcsCalendarColor {
+    param([string]$Content)
+
+    foreach ($line in ($Content -split "`r?`n")) {
+        if ($line -match '^(?:COLOR|X-APPLE-CALENDAR-COLOR|X-WR-CALCOLOR):(.*)$') {
+            $color = Convert-HexColorToRainmeter $matches[1]
+            if (![string]::IsNullOrWhiteSpace($color)) {
+                return $color
+            }
+        }
+    }
+
+    return ''
+}
+
 function Get-CalendarFeeds {
     param([string]$Path)
 
     $feeds = @()
-    for ($i = 1; $i -le 3; $i++) {
+    $maxFeeds = [int](Get-SettingValue -Path $Path -Name 'CalendarSlots' -Default '8')
+    $maxFeeds = [Math]::Max(3, [Math]::Min(12, $maxFeeds))
+    $defaultColors = @(
+        '255,199,50,255',
+        '104,170,255,245',
+        '126,220,117,245',
+        '238,120,150,245',
+        '155,111,225,245',
+        '24,163,214,245',
+        '224,72,72,245',
+        '234,191,48,245',
+        '118,118,118,245',
+        '255,132,64,245',
+        '92,214,168,245',
+        '205,214,224,230'
+    )
+
+    for ($i = 1; $i -le $maxFeeds; $i++) {
         $urlKey = if ($i -eq 1) { 'CalendarUrl' } else { "CalendarUrl$i" }
         $url = Get-SettingValue -Path $Path -Name $urlKey
         if ([string]::IsNullOrWhiteSpace($url)) { continue }
+        $defaultColor = $defaultColors[($i - 1) % $defaultColors.Count]
 
         $feeds += [pscustomobject]@{
             Url = $url
             Name = Get-SettingValue -Path $Path -Name "CalendarName$i"
             FallbackName = "Calendar $i"
-            Color = Get-SettingValue -Path $Path -Name "CalendarColor$i" -Default '205,214,224,230'
+            Color = Get-SettingValue -Path $Path -Name "CalendarColor$i" -Default $defaultColor
         }
     }
 
@@ -401,12 +454,14 @@ function Get-CalendarContent {
     param([string]$Source)
 
     if (Test-Path -LiteralPath $Source) {
-        return Get-Content -LiteralPath $Source -Raw
+        return Get-Content -LiteralPath $Source -Raw -Encoding UTF8
     }
 
     try {
-        $response = Invoke-WebRequest -Uri $Source -UseBasicParsing -TimeoutSec 25
-        return $response.Content
+        $client = New-Object System.Net.WebClient
+        $client.Headers.Add('User-Agent', 'Blipline/0.2')
+        $client.Headers.Add('Accept', 'text/calendar,text/plain,*/*')
+        return Convert-BytesToText ($client.DownloadData($Source))
     }
     catch {
         try {
@@ -565,6 +620,7 @@ function Write-AgendaCache {
         $dateLabel = $event.Start.ToString('ddd  dd MMM').ToUpperInvariant()
         $title = Convert-DisplayText $event.Title
         $location = Convert-DisplayText $event.Location
+        $notes = Convert-DisplayText $event.Notes
         $calendar = Convert-DisplayText $event.Calendar
 
         if ([string]::IsNullOrWhiteSpace($title)) {
@@ -573,6 +629,7 @@ function Write-AgendaCache {
 
         $lines.Add(("Event{0}Title={1}" -f $n, $title))
         $lines.Add(("Event{0}Location={1}" -f $n, $location))
+        $lines.Add(("Event{0}Notes={1}" -f $n, $notes))
         $lines.Add(("Event{0}Calendar={1}" -f $n, $calendar))
         $lines.Add(("Event{0}Time={1}" -f $n, $time))
         $lines.Add(("Event{0}EndTime={1}" -f $n, $endTime))
@@ -620,7 +677,9 @@ try {
                 $calendarName = $feed.FallbackName
             }
 
-            $events = Parse-IcsEvents -Content $content -CalendarName $calendarName -Color $feed.Color -WindowStart $parseWindowStart -WindowEnd $parseWindowEnd
+            $detectedColor = Get-IcsCalendarColor -Content $content
+            $calendarColor = if (![string]::IsNullOrWhiteSpace($detectedColor)) { $detectedColor } else { $feed.Color }
+            $events = Parse-IcsEvents -Content $content -CalendarName $calendarName -Color $calendarColor -WindowStart $parseWindowStart -WindowEnd $parseWindowEnd
             foreach ($event in $events) { $allEvents.Add($event) }
             $successCount++
         }

@@ -11,6 +11,11 @@
 - Replaced Today / 3 Days / Week range controls with Glass / Dense / Focus timeline style presets.
 - Changed Sample into a safer Demo mode that does not clear saved calendar feed URLs.
 - Added a middle-click recenter action on the timeline scroll area to jump back to the current/next event.
+- Expanded feed parsing to support up to eight configured iCal feed slots, with default color slots for each.
+- Added clickable color dots in settings for the visible feed rows so calendar colors can be edited without changing URLs.
+- Added iCal calendar-color detection for feeds that publish `COLOR`, `X-APPLE-CALENDAR-COLOR`, or `X-WR-CALCOLOR`.
+- Preserved Unicode and emoji text in event titles/details and imported event `DESCRIPTION` text for richer Dense rows.
+- Widened the timeline panel and row text area so longer titles, addresses, and notes have more breathing room.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

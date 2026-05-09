@@ -87,6 +87,7 @@ try {
         'VERSION:2.0'
         'PRODID:-//PetersMinistry//Blipline Test//EN'
         'X-WR-CALNAME:Fixture Work'
+        'X-APPLE-CALENDAR-COLOR:#159AE8'
         'BEGIN:VEVENT'
         'UID:daily-1@example.test'
         ('DTSTART:{0}' -f $dailyStart.ToString("yyyyMMdd'T'HHmmss"))
@@ -102,6 +103,7 @@ try {
         ('DTEND:{0}' -f $tomorrow.AddHours(12).ToString("yyyyMMdd'T'HHmmss"))
         ('SUMMARY:Coffee {0} & Grace {1}Check{2}' -f [char]0x2615, [char]0x201C, [char]0x201D)
         'LOCATION:Cafe'
+        ('DESCRIPTION:Bring {0} notes' -f [char]::ConvertFromUtf32(0x1F4D6))
         'END:VEVENT'
         'BEGIN:VEVENT'
         'UID:single-1@example.test'
@@ -151,8 +153,9 @@ try {
     Assert-True ([int]$feedVars['EventCount'] -gt 6) 'Fixture feed was trimmed to the visible row count.'
     Assert-True ($feedText -match 'Event\d+Calendar=Fixture Work') 'Calendar name was not auto-detected.'
     Assert-True ($feedText -match 'Daily Standup') 'Recurring daily event was not expanded.'
-    Assert-True ($feedText -match 'Coffee & Grace "Check"') 'Display text was not sanitized cleanly.'
-    Assert-True ($feedText -notmatch '[^\x00-\x7F]') 'Non-ASCII display characters leaked into the Rainmeter cache.'
+    Assert-True ($feedText -match ('Coffee {0} & Grace {1}Check{2}' -f [char]0x2615, [char]0x201C, [char]0x201D)) 'Unicode title text was not preserved.'
+    Assert-True ($feedText -match ('Bring {0} notes' -f [char]::ConvertFromUtf32(0x1F4D6))) 'Event notes were not imported.'
+    Assert-True ($feedText -match 'Event\d+Color=21,154,232,255') 'Calendar color metadata was not detected.'
     Assert-True ($feedText -match 'Client Review') 'Single event was not imported.'
     Assert-True ($feedText -match 'All Day Planning') 'All-day event was not imported.'
     Assert-True ($feedText -notmatch 'Cancelled Meeting') 'Cancelled event was imported.'

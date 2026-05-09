@@ -169,6 +169,21 @@ function Parse-IcsEvents {
     return @($events)
 }
 
+function Get-IcsCalendarName {
+    param([string]$Content)
+
+    foreach ($line in ($Content -split "`r?`n")) {
+        if ($line -match '^X-WR-CALNAME:(.*)$') {
+            $name = Convert-IcsText $matches[1]
+            if (![string]::IsNullOrWhiteSpace($name)) {
+                return $name
+            }
+        }
+    }
+
+    return ''
+}
+
 function Get-CalendarFeeds {
     param([string]$Path)
 
@@ -180,7 +195,8 @@ function Get-CalendarFeeds {
 
         $feeds += [pscustomobject]@{
             Url = $url
-            Name = Get-SettingValue -Path $Path -Name "CalendarName$i" -Default "Calendar $i"
+            Name = Get-SettingValue -Path $Path -Name "CalendarName$i"
+            FallbackName = "Calendar $i"
             Color = Get-SettingValue -Path $Path -Name "CalendarColor$i" -Default '205,214,224,230'
         }
     }
@@ -258,7 +274,15 @@ try {
     foreach ($feed in $feeds) {
         try {
             $response = Invoke-WebRequest -Uri $feed.Url -UseBasicParsing -TimeoutSec 25
-            $events = Parse-IcsEvents -Content $response.Content -CalendarName $feed.Name -Color $feed.Color
+            $calendarName = $feed.Name
+            if ([string]::IsNullOrWhiteSpace($calendarName)) {
+                $calendarName = Get-IcsCalendarName -Content $response.Content
+            }
+            if ([string]::IsNullOrWhiteSpace($calendarName)) {
+                $calendarName = $feed.FallbackName
+            }
+
+            $events = Parse-IcsEvents -Content $response.Content -CalendarName $calendarName -Color $feed.Color
             foreach ($event in $events) { $allEvents.Add($event) }
             $successCount++
         }

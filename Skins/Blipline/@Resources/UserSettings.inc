@@ -2,9 +2,9 @@
 CalendarUrl=
 CalendarUrl2=
 CalendarUrl3=
-CalendarName1=Calendar 1
-CalendarName2=Calendar 2
-CalendarName3=Calendar 3
+CalendarName1=
+CalendarName2=
+CalendarName3=
 DaysAhead=3
 RefreshMinutes=15
 RefreshSeconds=900

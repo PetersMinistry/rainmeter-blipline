@@ -84,7 +84,14 @@ local function clear_row(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', '5')
 end
 
-local function set_row(slot, event, active)
+local function row_time_label(event, headerDate)
+  if event.date ~= '' and headerDate ~= '' and event.date ~= headerDate then
+    return event.date:sub(1, 3) .. ' ' .. event.time
+  end
+  return event.time
+end
+
+local function set_row(slot, event, active, headerDate)
   local textColor = active and '255,226,84,255' or '245,247,252,238'
   local subColor = active and '230,214,156,238' or '170,178,190,226'
   local color = active and activeColor or event.color
@@ -94,7 +101,7 @@ local function set_row(slot, event, active)
     detail = event.calendar .. '  |  ' .. event.location
   end
 
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', event.time)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', row_time_label(event, headerDate))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', event.title)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', detail)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', color)
@@ -157,14 +164,15 @@ function Update()
     if activeSlot < 1 then activeSlot = 1 end
     if activeSlot > 6 then activeSlot = 6 end
 
-    SKIN:Bang('!SetVariable', 'HeaderDate', events[selected].date)
+    local headerDate = events[selected].date
+    SKIN:Bang('!SetVariable', 'HeaderDate', headerDate)
     SKIN:Bang('!SetVariable', 'CountdownY', tostring(rowY[activeSlot] - 20))
     SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(rowY[activeSlot] + 8))
 
     for slot = 1, 6 do
       local event = events[startIndex + slot - 1]
       if event then
-        set_row(slot, event, startIndex + slot - 1 == selected)
+        set_row(slot, event, startIndex + slot - 1 == selected, headerDate)
       else
         clear_row(slot)
       end

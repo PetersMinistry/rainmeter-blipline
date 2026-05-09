@@ -91,7 +91,7 @@ local function format_countdown(seconds)
     if minutes == 0 then
       return tostring(hours), 'hr'
     end
-    return tostring(hours .. 'h ' .. minutes), 'min'
+    return tostring(hours) .. 'h', tostring(minutes) .. 'm'
   end
   return tostring(math.ceil(seconds / 86400)), 'day'
 end

@@ -16,6 +16,7 @@
 - Added iCal calendar-color detection for feeds that publish `COLOR`, `X-APPLE-CALENDAR-COLOR`, or `X-WR-CALCOLOR`.
 - Preserved Unicode and emoji text in event titles/details and imported event `DESCRIPTION` text for richer Dense rows.
 - Widened the timeline panel and row text area so longer titles, addresses, and notes have more breathing room.
+- Refined the side countdown tag so hour/minute values render as a clean two-line time instead of crowding the tag.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

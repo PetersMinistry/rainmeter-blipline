@@ -67,4 +67,4 @@ The test uses temporary fake calendar data only. It does not require or expose a
 
 ## Status
 
-Early beta prototype. Not packaged for release yet.
+Working local prototype. Not packaged for release yet.

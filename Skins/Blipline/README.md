@@ -1,6 +1,6 @@
 # Blipline
 
-Prototype Rainmeter schedule timeline for Google Calendar-style iCal feeds.
+Working prototype Rainmeter schedule timeline for Google Calendar-style iCal feeds.
 
 Load:
 

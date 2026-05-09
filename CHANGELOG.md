@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.2.0 Working Prototype - 2026-05-09
+
+Working local MVP checkpoint.
+
 Renamed the project from the working placeholder to Blipline.
 Moved the timeline visual closer to the concept mockup: translucent dark panel, yellow countdown emphasis, dotted connector, active event glow, wider row spacing, and no extra title label above the skin.
 Expanded the settings panel with a close button, calendar URL paste field, sample-mode reset, refresh/timeline controls, and Today / 3 Days / Week agenda range buttons.

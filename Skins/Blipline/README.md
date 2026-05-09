@@ -14,4 +14,4 @@ Optional setup panel:
 Blipline\Control\Settings.ini
 ```
 
-Use the settings panel to paste a private Google Calendar iCal URL, or leave it blank for sample data.
+Use the settings panel to paste up to three private Google Calendar iCal URLs, or leave them blank for sample data.

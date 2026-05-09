@@ -39,6 +39,7 @@ local function read_cache()
     table.insert(events, {
       title = vars['Event' .. i .. 'Title'] or '',
       location = vars['Event' .. i .. 'Location'] or '',
+      calendar = vars['Event' .. i .. 'Calendar'] or '',
       time = vars['Event' .. i .. 'Time'] or '',
       endTime = vars['Event' .. i .. 'EndTime'] or '',
       date = vars['Event' .. i .. 'Date'] or '',
@@ -87,10 +88,15 @@ local function set_row(slot, event, active)
   local textColor = active and '255,226,84,255' or '245,247,252,238'
   local subColor = active and '230,214,156,238' or '170,178,190,226'
   local color = active and activeColor or event.color
+  local detail = event.location
+  if detail == '' then detail = event.calendar end
+  if detail ~= '' and event.calendar ~= '' and event.location ~= '' then
+    detail = event.calendar .. '  |  ' .. event.location
+  end
 
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', event.time)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', event.title)
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', event.location)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', detail)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', color)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', textColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'SubColor', subColor)

@@ -1,5 +1,10 @@
 [Variables]
 CalendarUrl=
+CalendarUrl2=
+CalendarUrl3=
+CalendarName1=Calendar 1
+CalendarName2=Calendar 2
+CalendarName3=Calendar 3
 DaysAhead=3
 RefreshMinutes=15
 MaxRows=6
@@ -16,3 +21,6 @@ DotColor=205,214,224,230
 BlueColor=104,170,255,245
 GreenColor=126,220,117,245
 RoseColor=238,120,150,245
+CalendarColor1=255,199,50,255
+CalendarColor2=104,170,255,245
+CalendarColor3=126,220,117,245

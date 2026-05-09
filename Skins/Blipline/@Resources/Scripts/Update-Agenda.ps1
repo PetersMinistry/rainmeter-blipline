@@ -70,7 +70,8 @@ function New-EventObject {
         [string]$Title,
         [string]$Location,
         [bool]$AllDay,
-        [string]$Color
+        [string]$Color,
+        [string]$Calendar
     )
 
     [pscustomobject]@{
@@ -80,6 +81,7 @@ function New-EventObject {
         Location = $Location
         AllDay = $AllDay
         Color = $Color
+        Calendar = $Calendar
     }
 }
 
@@ -89,19 +91,23 @@ function Get-SampleEvents {
     $next = $now.AddMinutes(15)
 
     @(
-        New-EventObject -Start $base.AddHours(-2) -End $base.AddHours(-1).AddMinutes(-15) -Title 'Morning Focus' -Location '' -AllDay:$false -Color '205,214,224,230'
-        New-EventObject -Start $base.AddHours(-1) -End $base.AddMinutes(-15) -Title 'Deep Work' -Location '' -AllDay:$false -Color '205,214,224,230'
-        New-EventObject -Start $next -End $next.AddMinutes(45) -Title 'Team Sync' -Location 'Conference Room A' -AllDay:$false -Color '255,199,50,255'
-        New-EventObject -Start $next.AddHours(1.5) -End $next.AddHours(2.25) -Title 'Lunch' -Location '' -AllDay:$false -Color '205,214,224,230'
-        New-EventObject -Start $next.AddHours(3) -End $next.AddHours(4) -Title 'Design Review' -Location 'Studio call' -AllDay:$false -Color '104,170,255,245'
-        New-EventObject -Start $next.AddHours(5) -End $next.AddHours(5.5) -Title 'Client Call' -Location '' -AllDay:$false -Color '126,220,117,245'
-        New-EventObject -Start $next.AddHours(7.5) -End $next.AddHours(8) -Title 'Wrap Up' -Location '' -AllDay:$false -Color '205,214,224,230'
-        New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(9) -End (Get-Date).Date.AddDays(1).AddHours(10) -Title 'Tomorrow Planning' -Location '' -AllDay:$false -Color '238,120,150,245'
+        New-EventObject -Start $base.AddHours(-2) -End $base.AddHours(-1).AddMinutes(-15) -Title 'Morning Focus' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
+        New-EventObject -Start $base.AddHours(-1) -End $base.AddMinutes(-15) -Title 'Deep Work' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
+        New-EventObject -Start $next -End $next.AddMinutes(45) -Title 'Team Sync' -Location 'Conference Room A' -AllDay:$false -Color '255,199,50,255' -Calendar 'Work'
+        New-EventObject -Start $next.AddHours(1.5) -End $next.AddHours(2.25) -Title 'Lunch' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Personal'
+        New-EventObject -Start $next.AddHours(3) -End $next.AddHours(4) -Title 'Design Review' -Location 'Studio call' -AllDay:$false -Color '104,170,255,245' -Calendar 'Work'
+        New-EventObject -Start $next.AddHours(5) -End $next.AddHours(5.5) -Title 'Client Call' -Location '' -AllDay:$false -Color '126,220,117,245' -Calendar 'Clients'
+        New-EventObject -Start $next.AddHours(7.5) -End $next.AddHours(8) -Title 'Wrap Up' -Location '' -AllDay:$false -Color '205,214,224,230' -Calendar 'Focus'
+        New-EventObject -Start (Get-Date).Date.AddDays(1).AddHours(9) -End (Get-Date).Date.AddDays(1).AddHours(10) -Title 'Tomorrow Planning' -Location '' -AllDay:$false -Color '238,120,150,245' -Calendar 'Planning'
     )
 }
 
 function Parse-IcsEvents {
-    param([string]$Content)
+    param(
+        [string]$Content,
+        [string]$CalendarName,
+        [string]$Color
+    )
 
     $unfolded = New-Object System.Collections.Generic.List[string]
     foreach ($line in ($Content -split "`r?`n")) {
@@ -136,7 +142,7 @@ function Parse-IcsEvents {
                 $title = Convert-IcsText $current['SUMMARY']
                 if (!$title) { $title = 'Calendar event' }
                 $location = Convert-IcsText $current['LOCATION']
-                $events.Add((New-EventObject -Start $start -End $end -Title $title -Location $location -AllDay:$allDay -Color '205,214,224,230'))
+                $events.Add((New-EventObject -Start $start -End $end -Title $title -Location $location -AllDay:$allDay -Color $Color -Calendar $CalendarName))
             }
             continue
         }
@@ -161,6 +167,25 @@ function Parse-IcsEvents {
     }
 
     return @($events)
+}
+
+function Get-CalendarFeeds {
+    param([string]$Path)
+
+    $feeds = @()
+    for ($i = 1; $i -le 3; $i++) {
+        $urlKey = if ($i -eq 1) { 'CalendarUrl' } else { "CalendarUrl$i" }
+        $url = Get-SettingValue -Path $Path -Name $urlKey
+        if ([string]::IsNullOrWhiteSpace($url)) { continue }
+
+        $feeds += [pscustomobject]@{
+            Url = $url
+            Name = Get-SettingValue -Path $Path -Name "CalendarName$i" -Default "Calendar $i"
+            Color = Get-SettingValue -Path $Path -Name "CalendarColor$i" -Default '205,214,224,230'
+        }
+    }
+
+    return $feeds
 }
 
 function Write-AgendaCache {
@@ -205,6 +230,7 @@ function Write-AgendaCache {
 
         $lines.Add(("Event{0}Title={1}" -f $n, ($event.Title -replace '[\r\n=]', ' ')))
         $lines.Add(("Event{0}Location={1}" -f $n, ($event.Location -replace '[\r\n=]', ' ')))
+        $lines.Add(("Event{0}Calendar={1}" -f $n, ($event.Calendar -replace '[\r\n=]', ' ')))
         $lines.Add(("Event{0}Time={1}" -f $n, $time))
         $lines.Add(("Event{0}EndTime={1}" -f $n, $endTime))
         $lines.Add(("Event{0}Date={1}" -f $n, $dateLabel))
@@ -218,18 +244,43 @@ function Write-AgendaCache {
 }
 
 try {
-    $calendarUrl = Get-SettingValue -Path $SettingsPath -Name 'CalendarUrl'
+    $feeds = @(Get-CalendarFeeds -Path $SettingsPath)
 
-    if ([string]::IsNullOrWhiteSpace($calendarUrl)) {
+    if ($feeds.Count -eq 0) {
         Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Sample data'
-        exit 0
+        return
     }
 
-    $response = Invoke-WebRequest -Uri $calendarUrl -UseBasicParsing -TimeoutSec 25
-    $events = Parse-IcsEvents -Content $response.Content
-    Write-AgendaCache -Events $events -Path $OutputPath -Status 'Calendar updated'
+    $allEvents = New-Object System.Collections.Generic.List[object]
+    $successCount = 0
+    $failureCount = 0
+
+    foreach ($feed in $feeds) {
+        try {
+            $response = Invoke-WebRequest -Uri $feed.Url -UseBasicParsing -TimeoutSec 25
+            $events = Parse-IcsEvents -Content $response.Content -CalendarName $feed.Name -Color $feed.Color
+            foreach ($event in $events) { $allEvents.Add($event) }
+            $successCount++
+        }
+        catch {
+            $failureCount++
+        }
+    }
+
+    if ($successCount -eq 0) {
+        Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Refresh failed - sample data'
+        return
+    }
+
+    $status = if ($failureCount -gt 0) {
+        "Updated $successCount feed(s), $failureCount failed"
+    }
+    else {
+        "Updated $successCount feed(s)"
+    }
+    Write-AgendaCache -Events @($allEvents) -Path $OutputPath -Status $status
 }
 catch {
     Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status ("Refresh failed - sample data")
-    exit 1
+    return
 }

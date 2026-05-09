@@ -6,6 +6,8 @@ Renamed the project from the working placeholder to Blipline.
 Moved the timeline visual closer to the concept mockup: translucent dark panel, yellow countdown emphasis, dotted connector, active event glow, wider row spacing, and no extra title label above the skin.
 Expanded the settings panel with a close button, calendar URL paste field, sample-mode reset, refresh/timeline controls, and Today / 3 Days / Week agenda range buttons.
 Adjusted agenda caching so Blipline keeps the next future event available even when it falls outside the selected range.
+Added MVP multi-calendar support for up to three private iCal feeds, including per-feed colors and calendar labels in the timeline detail row.
+Expanded the settings panel to show three feed paste fields while keeping Sample as a one-click reset back to demo data.
 
 ## 0.1.0 Prototype - 2026-05-09
 

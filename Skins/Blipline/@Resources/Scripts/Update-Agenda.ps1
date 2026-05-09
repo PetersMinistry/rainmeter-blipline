@@ -58,6 +58,144 @@ function Convert-IcsDate {
     return $null
 }
 
+function Get-IcsRuleMap {
+    param([string]$RuleText)
+
+    $map = @{}
+    if ([string]::IsNullOrWhiteSpace($RuleText)) {
+        return $map
+    }
+
+    foreach ($part in ($RuleText -split ';')) {
+        if ($part -match '^([^=]+)=(.*)$') {
+            $map[$matches[1].ToUpperInvariant()] = $matches[2]
+        }
+    }
+
+    return $map
+}
+
+function Test-IcsDayMatch {
+    param(
+        [datetime]$Date,
+        [string]$ByDay
+    )
+
+    if ([string]::IsNullOrWhiteSpace($ByDay)) {
+        return $true
+    }
+
+    $dayMap = @{
+        SU = [DayOfWeek]::Sunday
+        MO = [DayOfWeek]::Monday
+        TU = [DayOfWeek]::Tuesday
+        WE = [DayOfWeek]::Wednesday
+        TH = [DayOfWeek]::Thursday
+        FR = [DayOfWeek]::Friday
+        SA = [DayOfWeek]::Saturday
+    }
+
+    foreach ($day in ($ByDay -split ',')) {
+        $clean = ($day -replace '^[+-]?\d+', '').ToUpperInvariant()
+        if ($dayMap.ContainsKey($clean) -and $Date.DayOfWeek -eq $dayMap[$clean]) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function New-ShiftedEvent {
+    param(
+        [object]$Event,
+        [datetime]$Start
+    )
+
+    $duration = $Event.End - $Event.Start
+    New-EventObject -Start $Start -End $Start.Add($duration) -Title $Event.Title -Location $Event.Location -AllDay:$Event.AllDay -Color $Event.Color -Calendar $Event.Calendar
+}
+
+function Expand-IcsEvent {
+    param(
+        [object]$Event,
+        [string]$RuleText,
+        [object[]]$ExDates,
+        [datetime]$WindowStart,
+        [datetime]$WindowEnd
+    )
+
+    if ([string]::IsNullOrWhiteSpace($RuleText)) {
+        return @($Event)
+    }
+
+    $rule = Get-IcsRuleMap -RuleText $RuleText
+    $freq = ''
+    if ($rule.ContainsKey('FREQ')) {
+        $freq = $rule['FREQ'].ToUpperInvariant()
+    }
+    if ($freq -notin @('DAILY', 'WEEKLY', 'MONTHLY')) {
+        return @($Event)
+    }
+
+    $interval = 1
+    if ($rule.ContainsKey('INTERVAL')) {
+        $interval = [Math]::Max(1, [int]$rule['INTERVAL'])
+    }
+
+    $countLimit = if ($rule.ContainsKey('COUNT')) { [int]$rule['COUNT'] } else { 0 }
+    $until = if ($rule.ContainsKey('UNTIL')) { Convert-IcsDate $rule['UNTIL'] } else { $null }
+    $byDay = if ($rule.ContainsKey('BYDAY')) { $rule['BYDAY'] } else { '' }
+    $exKeys = @{}
+    foreach ($exDate in @($ExDates)) {
+        if ($exDate) {
+            $exKeys[$exDate.ToString('yyyyMMddHHmmss')] = $true
+        }
+    }
+
+    $expanded = New-Object System.Collections.Generic.List[object]
+    $candidate = $Event.Start
+    $generated = 0
+    $guard = 0
+    $maxWindow = $WindowEnd.AddDays(1)
+
+    while ($candidate -lt $maxWindow -and $guard -lt 1000) {
+        $guard++
+        $include = $true
+        if ($until -and $candidate -gt $until) { break }
+        if ($countLimit -gt 0 -and $generated -ge $countLimit) { break }
+
+        if ($freq -eq 'WEEKLY' -and -not (Test-IcsDayMatch -Date $candidate -ByDay $byDay)) {
+            $include = $false
+        }
+
+        if ($include) {
+            $generated++
+            $shifted = New-ShiftedEvent -Event $Event -Start $candidate
+            $key = $candidate.ToString('yyyyMMddHHmmss')
+            if ($shifted.End -ge $WindowStart -and $shifted.Start -lt $WindowEnd -and -not $exKeys.ContainsKey($key)) {
+                $expanded.Add($shifted)
+            }
+        }
+
+        if ($freq -eq 'DAILY') {
+            $candidate = $candidate.AddDays($interval)
+        }
+        elseif ($freq -eq 'WEEKLY') {
+            if ([string]::IsNullOrWhiteSpace($byDay)) {
+                $candidate = $candidate.AddDays(7 * $interval)
+            }
+            else {
+                $candidate = $candidate.AddDays(1)
+            }
+        }
+        elseif ($freq -eq 'MONTHLY') {
+            $candidate = $candidate.AddMonths($interval)
+        }
+    }
+
+    return $expanded.ToArray()
+}
+
 function Get-UnixSeconds {
     param([datetime]$Date)
     return ([DateTimeOffset]$Date).ToUnixTimeSeconds()
@@ -106,7 +244,9 @@ function Parse-IcsEvents {
     param(
         [string]$Content,
         [string]$CalendarName,
-        [string]$Color
+        [string]$Color,
+        [datetime]$WindowStart,
+        [datetime]$WindowEnd
     )
 
     $unfolded = New-Object System.Collections.Generic.List[string]
@@ -132,6 +272,14 @@ function Parse-IcsEvents {
 
         if ($line -eq 'END:VEVENT') {
             $inEvent = $false
+            $status = ''
+            if ($current.ContainsKey('STATUS')) {
+                $status = $current['STATUS'].ToUpperInvariant()
+            }
+            if ($status -eq 'CANCELLED') {
+                continue
+            }
+
             $start = Convert-IcsDate $current['DTSTART']
             $end = Convert-IcsDate $current['DTEND']
             if ($start) {
@@ -142,7 +290,10 @@ function Parse-IcsEvents {
                 $title = Convert-IcsText $current['SUMMARY']
                 if (!$title) { $title = 'Calendar event' }
                 $location = Convert-IcsText $current['LOCATION']
-                $events.Add((New-EventObject -Start $start -End $end -Title $title -Location $location -AllDay:$allDay -Color $Color -Calendar $CalendarName))
+                $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -AllDay:$allDay -Color $Color -Calendar $CalendarName
+                foreach ($event in (Expand-IcsEvent -Event $baseEvent -RuleText $current['RRULE'] -ExDates @($current['EXDATE']) -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
+                    $events.Add($event)
+                }
             }
             continue
         }
@@ -164,9 +315,20 @@ function Parse-IcsEvents {
         elseif ($name -eq 'SUMMARY' -or $name -eq 'LOCATION') {
             $current[$name] = $value
         }
+        elseif ($name -eq 'STATUS' -or $name -eq 'RRULE') {
+            $current[$name] = $value
+        }
+        elseif ($name -eq 'EXDATE') {
+            $dates = @()
+            foreach ($dateValue in ($value -split ',')) {
+                $date = Convert-IcsDate $dateValue
+                if ($date) { $dates += $date }
+            }
+            $current['EXDATE'] = @($current['EXDATE']) + $dates
+        }
     }
 
-    return @($events)
+    return $events.ToArray()
 }
 
 function Get-IcsCalendarName {
@@ -202,6 +364,17 @@ function Get-CalendarFeeds {
     }
 
     return $feeds
+}
+
+function Get-CalendarContent {
+    param([string]$Source)
+
+    if (Test-Path -LiteralPath $Source) {
+        return Get-Content -LiteralPath $Source -Raw
+    }
+
+    $response = Invoke-WebRequest -Uri $Source -UseBasicParsing -TimeoutSec 25
+    return $response.Content
 }
 
 function Write-AgendaCache {
@@ -261,6 +434,10 @@ function Write-AgendaCache {
 
 try {
     $feeds = @(Get-CalendarFeeds -Path $SettingsPath)
+    $today = (Get-Date).Date
+    $daysAhead = [int](Get-SettingValue -Path $SettingsPath -Name 'DaysAhead' -Default '3')
+    $parseWindowStart = $today.AddDays(-7)
+    $parseWindowEnd = $today.AddDays([Math]::Max(31, $daysAhead + 7))
 
     if ($feeds.Count -eq 0) {
         Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Sample data'
@@ -273,16 +450,16 @@ try {
 
     foreach ($feed in $feeds) {
         try {
-            $response = Invoke-WebRequest -Uri $feed.Url -UseBasicParsing -TimeoutSec 25
+            $content = Get-CalendarContent -Source $feed.Url
             $calendarName = $feed.Name
             if ([string]::IsNullOrWhiteSpace($calendarName)) {
-                $calendarName = Get-IcsCalendarName -Content $response.Content
+                $calendarName = Get-IcsCalendarName -Content $content
             }
             if ([string]::IsNullOrWhiteSpace($calendarName)) {
                 $calendarName = $feed.FallbackName
             }
 
-            $events = Parse-IcsEvents -Content $response.Content -CalendarName $calendarName -Color $feed.Color
+            $events = Parse-IcsEvents -Content $content -CalendarName $calendarName -Color $feed.Color -WindowStart $parseWindowStart -WindowEnd $parseWindowEnd
             foreach ($event in $events) { $allEvents.Add($event) }
             $successCount++
         }
@@ -302,7 +479,7 @@ try {
     else {
         "Updated $successCount feed(s)"
     }
-    Write-AgendaCache -Events @($allEvents) -Path $OutputPath -Status $status
+    Write-AgendaCache -Events $allEvents.ToArray() -Path $OutputPath -Status $status
 }
 catch {
     Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status ("Refresh failed - sample data")

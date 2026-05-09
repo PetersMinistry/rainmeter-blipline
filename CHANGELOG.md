@@ -12,6 +12,8 @@ Made the refresh interval explicit for Rainmeter and added refresh cadence text 
 Added compact day labels on timeline rows when a visible event is outside the active header date.
 Documented private calendar URL and generated-cache safety rules.
 Added automatic calendar-name detection from iCal `X-WR-CALNAME` values, with per-feed fallback labels.
+Added basic iCal recurrence expansion for daily, weekly, and monthly rules, plus cancelled-event and EXDATE handling.
+Added `tools\Test-AgendaPipeline.ps1` to verify sample mode and safe fake iCal ingestion without a private calendar URL.
 
 ## 0.1.0 Prototype - 2026-05-09
 

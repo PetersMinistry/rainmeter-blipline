@@ -349,6 +349,21 @@ local function apply_style()
   }
 
   local preset = presets[template] or presets.Classic
+  local classic = presets.Classic
+  local sharedGeometry = {
+    'titleW', 'detailW', 'timelineX', 'timeX', 'iconX', 'titleX', 'baseY', 'gap',
+    'panelX', 'panelY', 'panelW', 'panelH', 'panelRadius',
+    'headerX', 'headerY', 'calX', 'calY', 'sourceX', 'sourceY', 'sourceW',
+    'lineY', 'lineH', 'scrollX', 'scrollY', 'scrollW', 'scrollH',
+    'countdownX', 'countdownTextX', 'connectorX', 'connectorW',
+    'divLeftX', 'divLeftW', 'divRightX', 'divRightW', 'divChipX', 'divDotX', 'divTextX'
+  }
+  if preset ~= classic then
+    for _, key in ipairs(sharedGeometry) do
+      preset[key] = classic[key]
+    end
+  end
+
   rowBaseY = preset.baseY
   rowGap = preset.gap
   if style == 'Dense' then

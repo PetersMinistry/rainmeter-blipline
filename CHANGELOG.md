@@ -6,6 +6,7 @@
 - Added layout template selection with six visual treatments: Classic, Command, Ledger, Metro, Studio, and Daylight light mode.
 - Reworked layout templates so they now drive the actual timeline geometry: panel size/placement, countdown tag position, connector, axis, row columns, day separators, scroll hotspot, and header placement.
 - Added a clickable feed color palette: select a feed dot, then choose from twelve swatches instead of typing RGBA values.
+- Reduced the setup palette swatch size so the event-detail controls below it are readable.
 - Added event-detail visibility toggles for calendar name, location, and notes.
 - Widened and reorganized the setup panel so feed status, palette swatches, template buttons, and notes have clearer lanes.
 - Expanded Classic vertically and increased day-separator breathing room to reduce title/detail/date-chip overlap.

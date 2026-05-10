@@ -278,41 +278,59 @@ local function apply_style()
   local presets = {
     Classic = {
       title = '12', sub = '9', titleW = '276', detailW = '286', timelineX = '232', timeX = '210', iconX = '258', titleX = '286', baseY = {94, 134, 174, 214, 254, 294}, gap = 40,
+      panelX = '92', panelY = '22', panelW = '486', panelH = '396', panelRadius = '14', headerX = '336', headerY = '42', calX = '546', calY = '42', sourceX = '336', sourceY = '388', sourceW = '370',
+      lineY = '92', lineH = '300', scrollX = '92', scrollY = '72', scrollW = '486', scrollH = '326', countdownX = '2', countdownTextX = '36', connectorX = '92', connectorW = '132',
+      divLeftX = '286', divLeftW = '32', divRightX = '398', divRightW = '154', divChipX = '321', divDotX = '230', divTextX = '356',
       panel = '12,16,22,150', edge = '255,255,255,62', line = '225,230,238,96', text = '245,247,252,238', subc = '170,178,190,226',
       activeText = '255,226,84,255', activeSub = '230,214,156,238', accent = '255,199,50,255', accentSoft = '255,199,50,112',
       dividerLine = '255,255,255,34', dividerFill = '8,12,18,178', dividerText = '202,211,224,218', tag = '12,16,22,206', tagSub = '224,214,162,238',
       sheen = '255,255,255,5', glow1 = '255,199,50,42', glow2 = '255,199,50,86'
     },
     Command = {
-      title = '11', sub = '8', titleW = '292', detailW = '300', timelineX = '220', timeX = '198', iconX = '246', titleX = '274', baseY = {88, 124, 160, 196, 232, 268}, gap = 36,
+      title = '10', sub = '8', titleW = '238', detailW = '250', timelineX = '206', timeX = '184', iconX = '230', titleX = '258', baseY = {90, 124, 158, 192, 226, 260}, gap = 34,
+      panelX = '118', panelY = '8', panelW = '426', panelH = '366', panelRadius = '4', headerX = '330', headerY = '26', calX = '510', calY = '26', sourceX = '330', sourceY = '346', sourceW = '330',
+      lineY = '76', lineH = '248', scrollX = '118', scrollY = '62', scrollW = '426', scrollH = '286', countdownX = '18', countdownTextX = '52', connectorX = '104', connectorW = '102',
+      divLeftX = '258', divLeftW = '28', divRightX = '366', divRightW = '126', divChipX = '292', divDotX = '204', divTextX = '327',
       panel = '3,8,7,222', edge = '85,255,170,108', line = '82,255,170,96', text = '224,255,238,244', subc = '140,207,180,232',
       activeText = '96,255,180,255', activeSub = '185,255,218,238', accent = '96,255,180,255', accentSoft = '96,255,180,100',
       dividerLine = '82,255,170,44', dividerFill = '3,24,18,220', dividerText = '178,255,216,230', tag = '3,16,13,238', tagSub = '164,246,204,238',
       sheen = '255,255,255,0', glow1 = '96,255,180,34', glow2 = '96,255,180,76'
     },
     Ledger = {
-      title = '11', sub = '8', titleW = '286', detailW = '298', timelineX = '238', timeX = '216', iconX = '264', titleX = '292', baseY = {96, 134, 172, 210, 248, 286}, gap = 38,
+      title = '11', sub = '8', titleW = '340', detailW = '350', timelineX = '220', timeX = '176', iconX = '252', titleX = '284', baseY = {106, 144, 182, 220, 258, 296}, gap = 38,
+      panelX = '62', panelY = '42', panelW = '612', panelH = '350', panelRadius = '2', headerX = '368', headerY = '60', calX = '642', calY = '60', sourceX = '368', sourceY = '360', sourceW = '500',
+      lineY = '94', lineH = '254', scrollX = '62', scrollY = '84', scrollW = '612', scrollH = '280', countdownX = '688', countdownTextX = '722', connectorX = '674', connectorW = '40',
+      divLeftX = '284', divLeftW = '58', divRightX = '430', divRightW = '190', divChipX = '350', divDotX = '218', divTextX = '385',
       panel = '16,15,13,220', edge = '238,215,170,86', line = '238,215,170,72', text = '249,241,226,244', subc = '199,184,158,232',
       activeText = '255,205,92,255', activeSub = '238,216,174,238', accent = '255,205,92,255', accentSoft = '255,205,92,100',
       dividerLine = '238,215,170,34', dividerFill = '26,23,18,224', dividerText = '229,211,181,230', tag = '20,17,12,238', tagSub = '238,216,174,238',
       sheen = '255,255,255,4', glow1 = '255,205,92,36', glow2 = '255,205,92,78'
     },
     Metro = {
-      title = '12', sub = '8', titleW = '288', detailW = '296', timelineX = '214', timeX = '192', iconX = '242', titleX = '270', baseY = {92, 132, 172, 212, 252, 292}, gap = 40,
+      title = '11', sub = '8', titleW = '340', detailW = '352', timelineX = '250', timeX = '228', iconX = '278', titleX = '310', baseY = {90, 124, 158, 192, 226, 260}, gap = 34,
+      panelX = '126', panelY = '58', panelW = '650', panelH = '276', panelRadius = '22', headerX = '452', headerY = '74', calX = '742', calY = '74', sourceX = '452', sourceY = '304', sourceW = '520',
+      lineY = '84', lineH = '214', scrollX = '126', scrollY = '78', scrollW = '650', scrollH = '238', countdownX = '18', countdownTextX = '52', connectorX = '104', connectorW = '146',
+      divLeftX = '310', divLeftW = '44', divRightX = '442', divRightW = '246', divChipX = '360', divDotX = '248', divTextX = '395',
       panel = '8,13,24,214', edge = '86,160,255,104', line = '105,180,255,86', text = '236,244,255,246', subc = '154,180,216,232',
       activeText = '130,204,255,255', activeSub = '196,226,255,238', accent = '104,170,255,255', accentSoft = '104,170,255,104',
       dividerLine = '105,180,255,38', dividerFill = '8,20,38,224', dividerText = '198,225,255,230', tag = '6,15,30,238', tagSub = '188,218,255,238',
       sheen = '255,255,255,6', glow1 = '104,170,255,34', glow2 = '104,170,255,82'
     },
     Studio = {
-      title = '12', sub = '8', titleW = '288', detailW = '296', timelineX = '228', timeX = '206', iconX = '254', titleX = '282', baseY = {92, 132, 174, 216, 258, 300}, gap = 42,
+      title = '12', sub = '8', titleW = '300', detailW = '314', timelineX = '374', timeX = '352', iconX = '400', titleX = '430', baseY = {92, 132, 174, 216, 258, 300}, gap = 42,
+      panelX = '250', panelY = '24', panelW = '528', panelH = '420', panelRadius = '18', headerX = '514', headerY = '44', calX = '744', calY = '44', sourceX = '514', sourceY = '412', sourceW = '418',
+      lineY = '82', lineH = '320', scrollX = '250', scrollY = '76', scrollW = '528', scrollH = '342', countdownX = '136', countdownTextX = '170', connectorX = '222', connectorW = '152',
+      divLeftX = '430', divLeftW = '38', divRightX = '552', divRightW = '158', divChipX = '474', divDotX = '372', divTextX = '509',
       panel = '14,10,16,222', edge = '238,120,150,96', line = '238,120,150,72', text = '252,239,246,246', subc = '205,169,187,232',
       activeText = '255,159,194,255', activeSub = '242,203,219,238', accent = '238,120,150,255', accentSoft = '238,120,150,104',
       dividerLine = '238,120,150,38', dividerFill = '28,14,24,224', dividerText = '242,203,219,230', tag = '24,12,21,238', tagSub = '242,203,219,238',
       sheen = '255,255,255,5', glow1 = '238,120,150,34', glow2 = '238,120,150,82'
     },
     Daylight = {
-      title = '12', sub = '8', titleW = '288', detailW = '296', timelineX = '228', timeX = '206', iconX = '254', titleX = '282', baseY = {94, 134, 174, 214, 254, 294}, gap = 40,
+      title = '12', sub = '8', titleW = '330', detailW = '342', timelineX = '246', timeX = '224', iconX = '274', titleX = '304', baseY = {98, 138, 178, 218, 258, 298}, gap = 40,
+      panelX = '104', panelY = '18', panelW = '594', panelH = '400', panelRadius = '10', headerX = '402', headerY = '40', calX = '666', calY = '40', sourceX = '402', sourceY = '388', sourceW = '470',
+      lineY = '90', lineH = '306', scrollX = '104', scrollY = '74', scrollW = '594', scrollH = '326', countdownX = '6', countdownTextX = '40', connectorX = '92', connectorW = '154',
+      divLeftX = '304', divLeftW = '46', divRightX = '438', divRightW = '198', divChipX = '358', divDotX = '244', divTextX = '393',
       panel = '250,252,255,238', edge = '32,40,55,68', line = '54,68,90,74', text = '22,27,36,246', subc = '84,95,112,234',
       activeText = '178,114,0,255', activeSub = '98,78,40,238', accent = '223,150,28,255', accentSoft = '223,150,28,104',
       dividerLine = '54,68,90,30', dividerFill = '255,255,255,232', dividerText = '58,68,84,232', tag = '255,255,255,246', tagSub = '98,78,40,238',
@@ -338,6 +356,35 @@ local function apply_style()
   SKIN:Bang('!SetVariable', 'TimeX', preset.timeX)
   SKIN:Bang('!SetVariable', 'IconX', preset.iconX)
   SKIN:Bang('!SetVariable', 'TitleX', preset.titleX)
+  SKIN:Bang('!SetVariable', 'PanelX', preset.panelX)
+  SKIN:Bang('!SetVariable', 'PanelY', preset.panelY)
+  SKIN:Bang('!SetVariable', 'PanelW', preset.panelW)
+  SKIN:Bang('!SetVariable', 'PanelH', preset.panelH)
+  SKIN:Bang('!SetVariable', 'PanelRadius', preset.panelRadius)
+  SKIN:Bang('!SetVariable', 'HeaderX', preset.headerX)
+  SKIN:Bang('!SetVariable', 'HeaderY', preset.headerY)
+  SKIN:Bang('!SetVariable', 'CalendarX', preset.calX)
+  SKIN:Bang('!SetVariable', 'CalendarY', preset.calY)
+  SKIN:Bang('!SetVariable', 'SourceX', preset.sourceX)
+  SKIN:Bang('!SetVariable', 'SourceY', preset.sourceY)
+  SKIN:Bang('!SetVariable', 'SourceW', preset.sourceW)
+  SKIN:Bang('!SetVariable', 'TimelineLineY', preset.lineY)
+  SKIN:Bang('!SetVariable', 'TimelineLineH', preset.lineH)
+  SKIN:Bang('!SetVariable', 'ScrollX', preset.scrollX)
+  SKIN:Bang('!SetVariable', 'ScrollY', preset.scrollY)
+  SKIN:Bang('!SetVariable', 'ScrollW', preset.scrollW)
+  SKIN:Bang('!SetVariable', 'ScrollH', preset.scrollH)
+  SKIN:Bang('!SetVariable', 'CountdownX', preset.countdownX)
+  SKIN:Bang('!SetVariable', 'CountdownTextX', preset.countdownTextX)
+  SKIN:Bang('!SetVariable', 'ConnectorX', preset.connectorX)
+  SKIN:Bang('!SetVariable', 'ConnectorW', preset.connectorW)
+  SKIN:Bang('!SetVariable', 'DividerLeftX', preset.divLeftX)
+  SKIN:Bang('!SetVariable', 'DividerLeftW', preset.divLeftW)
+  SKIN:Bang('!SetVariable', 'DividerRightX', preset.divRightX)
+  SKIN:Bang('!SetVariable', 'DividerRightW', preset.divRightW)
+  SKIN:Bang('!SetVariable', 'DividerChipX', preset.divChipX)
+  SKIN:Bang('!SetVariable', 'DividerDotX', preset.divDotX)
+  SKIN:Bang('!SetVariable', 'DividerTextX', preset.divTextX)
   SKIN:Bang('!SetVariable', 'PanelFill', preset.panel)
   SKIN:Bang('!SetVariable', 'PanelEdge', preset.edge)
   SKIN:Bang('!SetVariable', 'LineColor', preset.line)

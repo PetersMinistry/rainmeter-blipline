@@ -4,6 +4,7 @@
 
 - Made the settings panel opaque black and expanded it for the richer setup controls.
 - Added layout template selection with six visual treatments: Classic, Command, Ledger, Metro, Studio, and Daylight light mode.
+- Reworked layout templates so they now drive the actual timeline geometry: panel size/placement, countdown tag position, connector, axis, row columns, day separators, scroll hotspot, and header placement.
 - Added a clickable feed color palette: select a feed dot, then choose from twelve swatches instead of typing RGBA values.
 - Added yearly `RRULE` expansion so birthday/anniversary calendars imported from Google Calendar appear in the visible agenda window instead of staying pinned to their original old dates.
 - Added `RECURRENCE-ID` override handling so one-off edits inside weekly recurring events, including edited cancelled notices, replace the generated master occurrence.

@@ -2,7 +2,7 @@
 
 Blipline is a Rainmeter agenda timeline for Google Calendar-style private iCal feeds. It turns upcoming events into a smooth desktop schedule: current item in focus, next-event countdown on the side, and a scrollable timeline for looking ahead or back.
 
-![Blipline beta preview](docs/screenshots/blipline-beta-preview.png)
+![Blipline Classic timeline](docs/screenshots/blipline-classic.png)
 
 ## Download
 
@@ -33,16 +33,19 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 
 The beta includes six layout templates. They share the same Classic footprint so switching templates does not make the skin jump wider or taller.
 
-![Blipline template board](docs/screenshots/blipline-template-board.png)
-
 Templates:
 
-- Classic
-- Command
-- Ledger
-- Metro
-- Studio
-- Daylight light mode
+| Classic | Command |
+| --- | --- |
+| ![Blipline Classic template](docs/screenshots/blipline-classic.png) | ![Blipline Command template](docs/screenshots/blipline-command.png) |
+
+| Ledger | Metro |
+| --- | --- |
+| ![Blipline Ledger template](docs/screenshots/blipline-ledger.png) | ![Blipline Metro template](docs/screenshots/blipline-metro.png) |
+
+| Studio | Daylight |
+| --- | --- |
+| ![Blipline Studio template](docs/screenshots/blipline-studio.png) | ![Blipline Daylight template](docs/screenshots/blipline-daylight.png) |
 
 ## Load Paths
 
@@ -59,6 +62,8 @@ Blipline\Timeline\Timeline.ini
 ```
 
 The beta package opens the settings panel first so new users can import feeds, test Demo mode, pick colors, and choose a template before loading the timeline.
+
+![Blipline settings panel](docs/screenshots/blipline-settings.png)
 
 ## Google Calendar Setup
 

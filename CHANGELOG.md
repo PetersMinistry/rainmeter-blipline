@@ -17,6 +17,7 @@
 - Preserved Unicode and emoji text in event titles/details and imported event `DESCRIPTION` text for richer Dense rows.
 - Widened the timeline panel and row text area so longer titles, addresses, and notes have more breathing room.
 - Refined the side countdown tag so hour/minute values render as a clean two-line time instead of crowding the tag.
+- Refined Dense layout with a wider timeline panel, more row text width, smaller settings color swatches, and Rainmeter-safe symbol fallbacks for emoji/smart punctuation to avoid mojibake.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

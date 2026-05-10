@@ -127,6 +127,16 @@ local function set_row(slot, event, active, headerDate, y)
   if detail == '' then
     detail = event.location
   end
+  if style == 'Dense' then
+    detail = event.location
+    if event.notes ~= '' and detail ~= '' then
+      detail = detail .. '  |  ' .. event.notes
+    elseif event.notes ~= '' then
+      detail = event.notes
+    elseif detail == '' then
+      detail = event.calendar
+    end
+  end
   if style == 'Focus' and not active then
     detail = ''
   end
@@ -146,20 +156,20 @@ local function apply_style()
   if style == 'Dense' then
     SKIN:Bang('!SetVariable', 'RowTitleSize', '10')
     SKIN:Bang('!SetVariable', 'RowSubSize', '8')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '238')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '246')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '302')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '312')
     SKIN:Bang('!SetVariable', 'PanelFill', '10,14,20,166')
   elseif style == 'Focus' then
     SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
     SKIN:Bang('!SetVariable', 'RowSubSize', '8')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '238')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '246')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '302')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '312')
     SKIN:Bang('!SetVariable', 'PanelFill', '8,11,16,178')
   else
     SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
     SKIN:Bang('!SetVariable', 'RowSubSize', '9')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '238')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '246')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '302')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '312')
     SKIN:Bang('!SetVariable', 'PanelFill', '12,16,22,150')
   end
 end

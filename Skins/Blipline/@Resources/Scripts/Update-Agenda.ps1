@@ -41,6 +41,26 @@ function Convert-DisplayText {
         return ''
     }
 
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F37D), 'Meal')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F304), 'Sunrise')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F4D6), 'Book')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F338), '*')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F382), 'B-day')
+    $clean = $clean.Replace(([char]0x2615).ToString(), '')
+    $clean = $clean.Replace(([char]0x271D).ToString(), ([char]0x2020).ToString())
+    $clean = $clean.Replace(([char]0x27A1).ToString(), '>')
+    $clean = $clean.Replace(([char]0x2694).ToString(), 'x')
+    $clean = $clean.Replace(([char]0xFE0F).ToString(), '')
+    $clean = $clean.Replace(([char]0x2018).ToString(), "'")
+    $clean = $clean.Replace(([char]0x2019).ToString(), "'")
+    $clean = $clean.Replace(([char]0x201C).ToString(), '"')
+    $clean = $clean.Replace(([char]0x201D).ToString(), '"')
+    $clean = $clean.Replace(([char]0x2013).ToString(), '-')
+    $clean = $clean.Replace(([char]0x2014).ToString(), '-')
+    $clean = $clean.Replace(([char]0x2020).ToString(), '+')
+    $clean = $clean -replace '[\uD800-\uDFFF]', ''
+    $clean = $clean -replace '[^\x20-\x7E]', ''
+
     return (($clean -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
 }
 
@@ -640,7 +660,7 @@ function Write-AgendaCache {
         $lines.Add(("Event{0}Color={1}" -f $n, $color))
     }
 
-    Set-Content -LiteralPath $Path -Value $lines -Encoding UTF8
+    Set-Content -LiteralPath $Path -Value $lines -Encoding Default
 }
 
 try {

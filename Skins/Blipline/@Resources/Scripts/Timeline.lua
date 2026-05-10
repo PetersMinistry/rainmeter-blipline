@@ -15,7 +15,7 @@ local activeColor = '255,199,50,255'
 local noShape = 'Rectangle 0,0,0,0 | Fill Color 0,0,0,0 | StrokeWidth 0'
 local iconFg = '250,253,255,242'
 local iconDim = '8,12,18,86'
-local daySeparatorGap = 16
+local daySeparatorGap = 26
 
 local function skin_var(name, fallback)
   local value = SKIN:GetVariable(name)
@@ -40,6 +40,13 @@ local function read_number_variable(name, fallback, minValue, maxValue)
   if minValue and value < minValue then value = minValue end
   if maxValue and value > maxValue then value = maxValue end
   return math.floor(value)
+end
+
+local function read_bool_variable(name, fallback)
+  local value = SKIN:GetVariable(name)
+  if value == nil or value == '' then return fallback end
+  value = tostring(value):lower()
+  return value == '1' or value == 'true' or value == 'yes' or value == 'on'
 end
 
 local function clamp(value, minValue, maxValue)
@@ -230,21 +237,24 @@ local function set_row(slot, event, active, headerDate, y)
   local textColor = active and skin_var('RowActiveTextColor', '255,226,84,255') or skin_var('RowNormalTextColor', '245,247,252,238')
   local subColor = active and skin_var('RowActiveSubColor', '230,214,156,238') or skin_var('RowNormalSubColor', '170,178,190,226')
   local color = active and skin_var('AccentColor', activeColor) or event.color
+  local showCalendar = read_bool_variable('ShowCalendarName', true)
+  local showLocation = read_bool_variable('ShowEventLocation', true)
+  local showNotes = read_bool_variable('ShowEventNotes', true)
   local detailParts = {}
-  if event.calendar ~= '' then table.insert(detailParts, event.calendar) end
-  if event.location ~= '' then table.insert(detailParts, event.location) end
-  if style == 'Dense' and event.notes ~= '' then table.insert(detailParts, event.notes) end
+  if showCalendar and event.calendar ~= '' then table.insert(detailParts, event.calendar) end
+  if showLocation and event.location ~= '' then table.insert(detailParts, event.location) end
+  if showNotes and style == 'Dense' and event.notes ~= '' then table.insert(detailParts, event.notes) end
   local detail = table.concat(detailParts, '  |  ')
-  if detail == '' then
+  if detail == '' and showLocation then
     detail = event.location
   end
   if style == 'Dense' then
-    detail = event.location
-    if event.notes ~= '' and detail ~= '' then
+    detail = showLocation and event.location or ''
+    if showNotes and event.notes ~= '' and detail ~= '' then
       detail = detail .. '  |  ' .. event.notes
-    elseif event.notes ~= '' then
+    elseif showNotes and event.notes ~= '' then
       detail = event.notes
-    elseif detail == '' then
+    elseif detail == '' and showCalendar then
       detail = event.calendar
     end
   end
@@ -277,9 +287,9 @@ local function apply_style()
 
   local presets = {
     Classic = {
-      title = '12', sub = '9', titleW = '276', detailW = '286', timelineX = '232', timeX = '210', iconX = '258', titleX = '286', baseY = {94, 134, 174, 214, 254, 294}, gap = 40,
-      panelX = '92', panelY = '22', panelW = '486', panelH = '396', panelRadius = '14', headerX = '336', headerY = '42', calX = '546', calY = '42', sourceX = '336', sourceY = '388', sourceW = '370',
-      lineY = '92', lineH = '300', scrollX = '92', scrollY = '72', scrollW = '486', scrollH = '326', countdownX = '2', countdownTextX = '36', connectorX = '92', connectorW = '132',
+      title = '12', sub = '8', titleW = '306', detailW = '318', timelineX = '232', timeX = '210', iconX = '258', titleX = '286', baseY = {98, 146, 194, 242, 290, 338}, gap = 48,
+      panelX = '92', panelY = '22', panelW = '526', panelH = '446', panelRadius = '14', headerX = '356', headerY = '42', calX = '586', calY = '42', sourceX = '356', sourceY = '430', sourceW = '410',
+      lineY = '92', lineH = '344', scrollX = '92', scrollY = '72', scrollW = '526', scrollH = '376', countdownX = '2', countdownTextX = '36', connectorX = '92', connectorW = '132',
       divLeftX = '286', divLeftW = '32', divRightX = '398', divRightW = '154', divChipX = '321', divDotX = '230', divTextX = '356',
       panel = '12,16,22,150', edge = '255,255,255,62', line = '225,230,238,96', text = '245,247,252,238', subc = '170,178,190,226',
       activeText = '255,226,84,255', activeSub = '230,214,156,238', accent = '255,199,50,255', accentSoft = '255,199,50,112',

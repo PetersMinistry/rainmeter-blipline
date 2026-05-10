@@ -1,12 +1,14 @@
 # Blipline
 
-Blipline is a Rainmeter agenda timeline for Google Calendar-style private iCal feeds. It turns upcoming events into a smooth desktop schedule: current item in focus, next-event countdown on the side, and a scrollable timeline for looking ahead or back.
+Blipline is a Rainmeter agenda timeline for Google Calendar-style private iCal feeds. It turns your upcoming schedule into a clean desktop timeline so you can see what is coming up without constantly opening your calendar.
+
+It includes current/next event focus, a side countdown, smooth scrolling, multi-calendar support, color controls, corner resizing, and several visual templates depending on the look you are going for.
 
 ![Blipline Classic timeline](docs/screenshots/blipline-classic.png)
 
 ## Download
 
-First beta: `v0.3.0-beta.1`
+Current beta: `v0.3.1-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
@@ -16,6 +18,7 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Keeps a side countdown tag visible so the next thing is always obvious.
 - Scrolls through cached past and future events with the mouse wheel.
 - Clicks the countdown tag to glide back to the current or next event.
+- Resizes from the lower-right timeline corner, with mouse-wheel fine tuning and right-click reset.
 - Imports multiple Google Calendar private iCal URLs from the clipboard, one per line.
 - Supports up to eight iCal feed slots.
 - Merges multiple calendars into one readable agenda.
@@ -70,6 +73,8 @@ In Google Calendar, copy each calendar private iCal URL. In Blipline settings, p
 
 Private iCal URLs are secret read-only links. Anyone with one can read that calendar feed, so do not post them publicly.
 
+Use the lower-right corner of the timeline to resize it. Scroll on the corner for small size changes, or right-click it to reset.
+
 ## Privacy
 
 - Your private iCal URLs stay in your local Rainmeter skin settings.
@@ -83,4 +88,4 @@ Private iCal URLs are secret read-only links. Anyone with one can read that cale
 
 ## Status
 
-`0.3.0` is the first public beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`0.3.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.

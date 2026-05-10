@@ -1,5 +1,21 @@
 # Blipline Changelog
 
+## 0.3.1 Beta - 2026-05-10
+
+Feature beta update for timeline resizing.
+
+### Added
+
+- Lower-right timeline resize handle.
+- Persistent `UiScale` setting with 70% to 145% bounds.
+- Mouse-wheel fine tuning on the resize handle.
+- Right-click reset on the resize handle to return the timeline to 100%.
+
+### Improved
+
+- Timeline geometry, row spacing, typography, countdown tag, dots, and handle position now scale together from the same setting.
+- Live resize testing preserves local private calendar feed settings.
+
 ## 0.3.0 Beta - 2026-05-10
 
 First public beta release.

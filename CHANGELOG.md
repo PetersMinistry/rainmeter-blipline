@@ -9,6 +9,9 @@
 - Added event-detail visibility toggles for calendar name, location, and notes.
 - Widened and reorganized the setup panel so feed status, palette swatches, template buttons, and notes have clearer lanes.
 - Expanded Classic vertically and increased day-separator breathing room to reduce title/detail/date-chip overlap.
+- Removed the hard-coded inner rule from the side countdown tag and made the tag glow follow the selected template color.
+- Increased Command, Ledger, Metro, and Daylight timeline geometry so row text and day separators have more vertical and horizontal space.
+- Capped stacked day-separator offsets so heavily mixed multi-day calendars do not push the bottom rows out of the panel.
 - Added yearly `RRULE` expansion so birthday/anniversary calendars imported from Google Calendar appear in the visible agenda window instead of staying pinned to their original old dates.
 - Added `RECURRENCE-ID` override handling so one-off edits inside weekly recurring events, including edited cancelled notices, replace the generated master occurrence.
 - Added per-calendar cache backfill with `CachePerCalendarMinimum` so smaller calendars remain visible alongside very busy recurring feeds.

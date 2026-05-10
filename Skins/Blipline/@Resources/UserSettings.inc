@@ -17,6 +17,7 @@ CalendarName7=
 CalendarName8=
 CalendarSlots=8
 UseSample=0
+FeedImportStatus=No feed import yet
 DaysAhead=3
 RefreshMinutes=15
 RefreshSeconds=900

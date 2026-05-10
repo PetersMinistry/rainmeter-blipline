@@ -4,7 +4,9 @@ param(
 
     [int]$MaxFeeds = 8,
 
-    [string]$FeedText = ''
+    [string]$FeedText = '',
+
+    [switch]$Clear
 )
 
 $ErrorActionPreference = 'Stop'
@@ -55,6 +57,24 @@ if (!(Test-Path -LiteralPath $resolvedPath)) {
 }
 
 $max = [Math]::Max(1, [Math]::Min(12, $MaxFeeds))
+
+$lines = @(Get-Content -LiteralPath $resolvedPath)
+
+if ($Clear) {
+    for ($i = 1; $i -le $max; $i++) {
+        $key = if ($i -eq 1) { 'CalendarUrl' } else { "CalendarUrl$i" }
+        $lines = @(Set-IncValue -Lines $lines -Name $key -Value '')
+    }
+
+    $lines = @(Set-IncValue -Lines $lines -Name 'UseSample' -Value '1')
+    $lines = @(Set-IncValue -Lines $lines -Name 'FeedImportStatus' -Value ('Cleared feeds at ' + (Get-Date -Format 'h:mm tt')))
+
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllLines($resolvedPath, $lines, $utf8NoBom)
+    Write-Host ("Cleared feed URLs in {0}" -f $resolvedPath)
+    exit 0
+}
+
 $raw = $FeedText
 if ([string]::IsNullOrWhiteSpace($raw)) {
     $raw = Get-Clipboard -Raw
@@ -82,8 +102,6 @@ if ($feeds.Count -eq 0) {
     throw 'Clipboard did not contain any usable feed lines.'
 }
 
-$lines = @(Get-Content -LiteralPath $resolvedPath)
-
 for ($i = 1; $i -le $max; $i++) {
     $key = if ($i -eq 1) { 'CalendarUrl' } else { "CalendarUrl$i" }
     $value = if ($i -le $feeds.Count) { $feeds[$i - 1] } else { '' }
@@ -92,6 +110,7 @@ for ($i = 1; $i -le $max; $i++) {
 
 $lines = @(Set-IncValue -Lines $lines -Name 'UseSample' -Value '0')
 $lines = @(Set-IncValue -Lines $lines -Name 'CalendarSlots' -Value ([string]$max))
+$lines = @(Set-IncValue -Lines $lines -Name 'FeedImportStatus' -Value ('Imported ' + $feeds.Count + ' feed(s) at ' + (Get-Date -Format 'h:mm tt')))
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllLines($resolvedPath, $lines, $utf8NoBom)

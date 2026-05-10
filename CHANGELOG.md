@@ -23,6 +23,7 @@
 - Increased the timeline visual tick to 20fps during animation, throttled idle redraws, and replaced text badges with small drawn icon-style badges.
 - Added subtle day separators with date chips and hairlines between visible event groups, replacing repeated day prefixes in the time column.
 - Added an Import Clipboard flow for calendar feeds: copy multiple private iCal URLs one per line, then import them into the configured feed slots in one action.
+- Simplified feed setup around Import Clipboard, removed individual URL entry boxes, added Reset Feeds, and surfaced import/reset confirmation text.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

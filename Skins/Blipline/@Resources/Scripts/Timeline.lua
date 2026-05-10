@@ -4,6 +4,7 @@ local lastRead = 0
 local scrollCurrent = 0
 local scrollTarget = 0
 local userScrolled = false
+local homeAnimating = false
 
 local rowBaseY = {94, 134, 174, 214, 254, 294}
 local rowGap = 40
@@ -103,6 +104,7 @@ local function clear_row(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', hiddenColor)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconStroke', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', '255,255,255,0')
@@ -149,6 +151,7 @@ local function set_row(slot, event, active, headerDate, y)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', event.title)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', event.icon)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', event.icon ~= '' and event.color or hiddenColor)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconStroke', event.icon ~= '' and '255,255,255,48' or hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', detail)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', color)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', textColor)
@@ -216,12 +219,19 @@ function Scroll(direction)
   scrollTarget = clamp(scrollTarget + (amount * step), 0, max_scroll(maxRows))
   scrollCurrent = scrollTarget
   userScrolled = true
+  homeAnimating = false
   Update()
   return ''
 end
 
 function CenterNow()
-  userScrolled = false
+  local maxRows = read_number_variable('MaxRows', 6, 1, 6)
+  local selected = find_selected(os.time())
+  if selected == 0 then return '' end
+
+  scrollTarget = clamp(selected - 2, 0, max_scroll(maxRows))
+  userScrolled = true
+  homeAnimating = true
   Update()
   return ''
 end
@@ -248,13 +258,26 @@ function Update()
     for slot = 1, 6 do clear_row(slot) end
   else
     local anchor = clamp(selected - 2, 0, max_scroll(maxRows))
-    if not userScrolled then
+    if homeAnimating then
+      scrollTarget = anchor
+    elseif not userScrolled then
       scrollTarget = anchor
       scrollCurrent = anchor
     end
 
     scrollTarget = clamp(scrollTarget, 0, max_scroll(maxRows))
     scrollCurrent = clamp(scrollCurrent, 0, max_scroll(maxRows))
+
+    if homeAnimating then
+      local delta = scrollTarget - scrollCurrent
+      if math.abs(delta) < 0.05 then
+        scrollCurrent = scrollTarget
+        homeAnimating = false
+        userScrolled = false
+      else
+        scrollCurrent = scrollCurrent + (delta * 0.35)
+      end
+    end
 
     local startIndex = math.floor(scrollCurrent) + 1
     local fractional = scrollCurrent - math.floor(scrollCurrent)

@@ -155,6 +155,7 @@ try {
     Assert-True ($feedText -match 'Daily Standup') 'Recurring daily event was not expanded.'
     Assert-True ($feedText -match 'Coffee & Grace "Check"') 'Rainmeter-safe symbol title text was not preserved.'
     Assert-True ($feedText -match 'Bring Book notes') 'Event notes were not imported with Rainmeter-safe symbols.'
+    Assert-True ($feedText -match 'Event\d+Icon=') 'Event icon field was not written.'
     Assert-True ($feedText -notmatch 'ð|Ÿ|â|�') 'Mojibake leaked into the Rainmeter cache.'
     Assert-True ($feedText -match 'Event\d+Color=21,154,232,255') 'Calendar color metadata was not detected.'
     Assert-True ($feedText -match 'Client Review') 'Single event was not imported.'

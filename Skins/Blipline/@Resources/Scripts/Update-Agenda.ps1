@@ -64,6 +64,57 @@ function Convert-DisplayText {
     return (($clean -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
 }
 
+function Get-EventIcon {
+    param([string]$Text)
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return ''
+    }
+
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F37D))) { return 'MEAL' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F304))) { return 'SUN' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F4D6))) { return 'BOOK' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F338))) { return 'LADY' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F382))) { return 'BDAY' }
+    if ($Text.Contains(([char]0x271D).ToString())) { return '+' }
+    if ($Text.Contains(([char]0x2694).ToString())) { return 'IRON' }
+    if ($Text -match '(?i)\bbible\b') { return 'BOOK' }
+    if ($Text -match '(?i)\bbreakfast|lunch|dinner|meal\b') { return 'MEAL' }
+    if ($Text -match '(?i)\bbirthday|b-day|bday\b') { return 'BDAY' }
+
+    return ''
+}
+
+function Convert-TitleText {
+    param([string]$Text)
+
+    $clean = Convert-IcsText $Text
+    if ([string]::IsNullOrWhiteSpace($clean)) {
+        return ''
+    }
+
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F37D), '')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F304), '')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F4D6), '')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F338), '')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F382), '')
+    $clean = $clean.Replace(([char]0x2615).ToString(), '')
+    $clean = $clean.Replace(([char]0x271D).ToString(), '')
+    $clean = $clean.Replace(([char]0x27A1).ToString(), '')
+    $clean = $clean.Replace(([char]0x2694).ToString(), '')
+    $clean = $clean.Replace(([char]0xFE0F).ToString(), '')
+    $clean = $clean.Replace(([char]0x2018).ToString(), "'")
+    $clean = $clean.Replace(([char]0x2019).ToString(), "'")
+    $clean = $clean.Replace(([char]0x201C).ToString(), '"')
+    $clean = $clean.Replace(([char]0x201D).ToString(), '"')
+    $clean = $clean.Replace(([char]0x2013).ToString(), '-')
+    $clean = $clean.Replace(([char]0x2014).ToString(), '-')
+    $clean = $clean -replace '[\uD800-\uDFFF]', ''
+    $clean = $clean -replace '[^\x20-\x7E]', ''
+
+    return (($clean -replace '\s+', ' ').Trim() -replace '^\s*[-|>]+\s*', '' -replace '[\r\n=]', ' ')
+}
+
 function Convert-HexColorToRainmeter {
     param([string]$Color)
 
@@ -638,7 +689,8 @@ function Write-AgendaCache {
         $time = if ($event.AllDay) { 'All day' } else { $event.Start.ToString('h:mm tt') }
         $endTime = if ($event.AllDay) { '' } else { $event.End.ToString('h:mm tt') }
         $dateLabel = $event.Start.ToString('ddd  dd MMM').ToUpperInvariant()
-        $title = Convert-DisplayText $event.Title
+        $icon = Get-EventIcon $event.Title
+        $title = Convert-TitleText $event.Title
         $location = Convert-DisplayText $event.Location
         $notes = Convert-DisplayText $event.Notes
         $calendar = Convert-DisplayText $event.Calendar
@@ -648,6 +700,7 @@ function Write-AgendaCache {
         }
 
         $lines.Add(("Event{0}Title={1}" -f $n, $title))
+        $lines.Add(("Event{0}Icon={1}" -f $n, $icon))
         $lines.Add(("Event{0}Location={1}" -f $n, $location))
         $lines.Add(("Event{0}Notes={1}" -f $n, $notes))
         $lines.Add(("Event{0}Calendar={1}" -f $n, $calendar))

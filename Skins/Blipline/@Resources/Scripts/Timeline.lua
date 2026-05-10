@@ -59,6 +59,7 @@ local function read_cache()
     local endEpoch = tonumber(vars['Event' .. i .. 'EndEpoch'] or '0') or 0
     table.insert(events, {
       title = vars['Event' .. i .. 'Title'] or '',
+      icon = vars['Event' .. i .. 'Icon'] or '',
       location = vars['Event' .. i .. 'Location'] or '',
       notes = vars['Event' .. i .. 'Notes'] or '',
       calendar = vars['Event' .. i .. 'Calendar'] or '',
@@ -100,6 +101,8 @@ local function clear_row(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Y', tostring(rowBaseY[slot] or 94))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', '')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', '')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', '255,255,255,0')
@@ -144,6 +147,8 @@ local function set_row(slot, event, active, headerDate, y)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Y', tostring(math.floor(y + 0.5)))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', row_time_label(event, headerDate))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', event.title)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', event.icon)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', event.icon ~= '' and event.color or hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', detail)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', color)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', textColor)
@@ -156,20 +161,20 @@ local function apply_style()
   if style == 'Dense' then
     SKIN:Bang('!SetVariable', 'RowTitleSize', '10')
     SKIN:Bang('!SetVariable', 'RowSubSize', '8')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '302')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '312')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '276')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '286')
     SKIN:Bang('!SetVariable', 'PanelFill', '10,14,20,166')
   elseif style == 'Focus' then
     SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
     SKIN:Bang('!SetVariable', 'RowSubSize', '8')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '302')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '312')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '276')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '286')
     SKIN:Bang('!SetVariable', 'PanelFill', '8,11,16,178')
   else
     SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
     SKIN:Bang('!SetVariable', 'RowSubSize', '9')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '302')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '312')
+    SKIN:Bang('!SetVariable', 'RowTitleW', '276')
+    SKIN:Bang('!SetVariable', 'RowDetailW', '286')
     SKIN:Bang('!SetVariable', 'PanelFill', '12,16,22,150')
   end
 end

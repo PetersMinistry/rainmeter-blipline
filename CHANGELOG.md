@@ -7,12 +7,14 @@
 - Reworked layout templates so they now drive the actual timeline geometry: panel size/placement, countdown tag position, connector, axis, row columns, day separators, scroll hotspot, and header placement.
 - Added a clickable feed color palette: select a feed dot, then choose from twelve swatches instead of typing RGBA values.
 - Reduced the setup palette swatch size so the event-detail controls below it are readable.
+- Separated the palette labels from the swatches so `Feed color palette` and `Selected feed` remain readable.
 - Added event-detail visibility toggles for calendar name, location, and notes.
 - Widened and reorganized the setup panel so feed status, palette swatches, template buttons, and notes have clearer lanes.
 - Expanded Classic vertically and increased day-separator breathing room to reduce title/detail/date-chip overlap.
 - Removed the hard-coded inner rule from the side countdown tag and made the tag glow follow the selected template color.
 - Returned all layout templates to Classic's shared footprint so alternate designs do not become wider or taller than the original skin shape.
 - Capped stacked day-separator offsets so heavily mixed multi-day calendars do not push the bottom rows out of the panel.
+- Smoothed the return-to-current animation and changed day-separator spacing so chips keep a steadier gap from neighboring events while scrolling.
 - Added yearly `RRULE` expansion so birthday/anniversary calendars imported from Google Calendar appear in the visible agenda window instead of staying pinned to their original old dates.
 - Added `RECURRENCE-ID` override handling so one-off edits inside weekly recurring events, including edited cancelled notices, replace the generated master occurrence.
 - Added per-calendar cache backfill with `CachePerCalendarMinimum` so smaller calendars remain visible alongside very busy recurring feeds.

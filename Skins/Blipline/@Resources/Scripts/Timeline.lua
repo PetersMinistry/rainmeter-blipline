@@ -15,7 +15,7 @@ local activeColor = '255,199,50,255'
 local noShape = 'Rectangle 0,0,0,0 | Fill Color 0,0,0,0 | StrokeWidth 0'
 local iconFg = '250,253,255,242'
 local iconDim = '8,12,18,86'
-local daySeparatorGap = 26
+local daySeparatorGap = 20
 
 local function skin_var(name, fallback)
   local value = SKIN:GetVariable(name)
@@ -146,7 +146,7 @@ end
 
 local function set_separator(slot, event, y)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerText', event.date)
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(math.floor(y - 18 + 0.5)))
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(math.floor(y - 22 + 0.5)))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerLine', skin_var('DividerLineColor', '255,255,255,34'))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerAccent', color_alpha(event.color, 176))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerFill', skin_var('DividerFillColor', '8,12,18,178'))
@@ -531,7 +531,7 @@ function Update(force)
         homeAnimating = false
         userScrolled = false
       else
-        scrollCurrent = scrollCurrent + (delta * 0.12)
+        scrollCurrent = scrollCurrent + (delta * 0.22)
       end
     end
 
@@ -550,7 +550,7 @@ function Update(force)
       if showSeparator[slot] then
         separatorCount = separatorCount + 1
       end
-      rowY[slot] = rowBaseY[slot] - (fractional * rowGap) + (math.min(separatorCount, 3) * daySeparatorGap)
+      rowY[slot] = rowBaseY[slot] - (fractional * rowGap) + (separatorCount * daySeparatorGap)
     end
 
     local activeY = selectedVisible and rowY[activeSlot] or rowBaseY[1] + ((selected - 1 - scrollCurrent) * rowGap)

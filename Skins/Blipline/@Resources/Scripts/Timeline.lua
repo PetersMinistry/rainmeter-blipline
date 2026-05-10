@@ -15,6 +15,7 @@ local activeColor = '255,199,50,255'
 local noShape = 'Rectangle 0,0,0,0 | Fill Color 0,0,0,0 | StrokeWidth 0'
 local iconFg = '250,253,255,242'
 local iconDim = '8,12,18,86'
+local daySeparatorGap = 16
 
 local function read_file(path)
   local file = io.open(path, 'r')
@@ -43,6 +44,12 @@ end
 
 local function max_scroll(maxRows)
   return math.max(0, #events - maxRows)
+end
+
+local function color_alpha(color, alpha)
+  local r, g, b = (color or ''):match('^(%d+),(%d+),(%d+)')
+  if not r then return color or hiddenColor end
+  return r .. ',' .. g .. ',' .. b .. ',' .. tostring(alpha)
 end
 
 local function icon_shapes(icon, color)
@@ -113,6 +120,24 @@ local function icon_shapes(icon, color)
     noShape,
     noShape,
     noShape
+end
+
+local function clear_separator(slot)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerText', '')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', '0')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerLine', hiddenColor)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerAccent', hiddenColor)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerFill', '0,0,0,0')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerTextColor', hiddenColor)
+end
+
+local function set_separator(slot, event, y)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerText', event.date)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(math.floor(y - 18 + 0.5)))
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerLine', '255,255,255,34')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerAccent', color_alpha(event.color, 176))
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerFill', '8,12,18,178')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerTextColor', '202,211,224,218')
 end
 
 local function read_cache()
@@ -187,12 +212,10 @@ local function clear_row(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', '255,255,255,0')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'SubColor', '255,255,255,0')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', '5')
+  clear_separator(slot)
 end
 
 local function row_time_label(event, headerDate)
-  if event.date ~= '' and headerDate ~= '' and event.date ~= headerDate then
-    return event.date:sub(1, 3) .. ' ' .. event.time
-  end
   return event.time
 end
 
@@ -371,8 +394,22 @@ function Update(force)
     local fractional = scrollCurrent - math.floor(scrollCurrent)
     local activeSlot = selected - startIndex + 1
     local selectedVisible = activeSlot >= 1 and activeSlot <= maxRows
-    local activeY = rowBaseY[1] + ((selected - 1 - scrollCurrent) * rowGap)
-    local pointerY = clamp(activeY, rowBaseY[1], rowBaseY[maxRows])
+    local rowY = {}
+    local showSeparator = {}
+    local separatorCount = 0
+
+    for slot = 1, maxRows do
+      local event = events[startIndex + slot - 1]
+      local previousEvent = events[startIndex + slot - 2]
+      showSeparator[slot] = event and previousEvent and event.date ~= '' and previousEvent.date ~= event.date
+      if showSeparator[slot] then
+        separatorCount = separatorCount + 1
+      end
+      rowY[slot] = rowBaseY[slot] - (fractional * rowGap) + (separatorCount * daySeparatorGap)
+    end
+
+    local activeY = selectedVisible and rowY[activeSlot] or rowBaseY[1] + ((selected - 1 - scrollCurrent) * rowGap)
+    local pointerY = clamp(activeY, rowBaseY[1], rowBaseY[maxRows] + (daySeparatorGap * 3))
 
     local headerDate = events[startIndex].date
     SKIN:Bang('!SetVariable', 'HeaderDate', headerDate)
@@ -382,8 +419,12 @@ function Update(force)
     for slot = 1, 6 do
       local event = events[startIndex + slot - 1]
       if event and slot <= maxRows then
-        local y = rowBaseY[slot] - (fractional * rowGap)
-        set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate, y)
+        if showSeparator[slot] then
+          set_separator(slot, event, rowY[slot])
+        else
+          clear_separator(slot)
+        end
+        set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate, rowY[slot])
       else
         clear_row(slot)
       end

@@ -21,6 +21,7 @@
 - Moved emoji/emote cues out of titles into small color-backed event badges, keeping titles clean while preserving visual shorthand.
 - Made the countdown tag clickable so it glides the timeline back to the current/next event, and hid empty event-badge outlines.
 - Increased the timeline visual tick to 20fps during animation, throttled idle redraws, and replaced text badges with small drawn icon-style badges.
+- Added subtle day separators with date chips and hairlines between visible event groups, replacing repeated day prefixes in the time column.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

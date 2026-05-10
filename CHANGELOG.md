@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added a release privacy test that blocks packaging when source settings contain private feed URLs, helper paths, runtime feed status, or generated cache data.
+- Updated release/privacy documentation to build from the Git-tracked source tree instead of the live Rainmeter install folder.
 - Made the settings panel opaque black and expanded it for the richer setup controls.
 - Added layout template selection with six visual treatments: Classic, Command, Ledger, Metro, Studio, and Daylight light mode.
 - Reworked layout templates so they now drive the actual timeline geometry: panel size/placement, countdown tag position, connector, axis, row columns, day separators, scroll hotspot, and header placement.

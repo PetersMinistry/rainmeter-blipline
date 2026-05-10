@@ -14,6 +14,6 @@ Optional setup panel:
 Blipline\Control\Settings.ini
 ```
 
-Use the settings panel to paste up to three private Google Calendar iCal URLs, or leave them blank for sample data.
+Use the settings panel to import private Google Calendar iCal URLs from the clipboard, one URL per line, or leave them blank for sample data.
 
 Private iCal URLs and generated agenda caches should stay local to the installed skin.

@@ -59,6 +59,19 @@ local function max_scroll(maxRows)
   return math.max(0, #events - maxRows)
 end
 
+local function feed_color_for_calendar(calendar)
+  if calendar == nil or calendar == '' then return '' end
+  local slots = read_number_variable('CalendarSlots', 8, 1, 12)
+  for i = 1, slots do
+    local name = trim(SKIN:GetVariable('Feed' .. i .. 'Name') or SKIN:GetVariable('CalendarName' .. i) or '')
+    local color = trim(SKIN:GetVariable('Feed' .. i .. 'Color') or SKIN:GetVariable('CalendarColor' .. i) or '')
+    if name ~= '' and name == calendar and color ~= '' and color ~= hiddenColor then
+      return color
+    end
+  end
+  return ''
+end
+
 local function color_alpha(color, alpha)
   local r, g, b = (color or ''):match('^(%d+),(%d+),(%d+)')
   if not r then return color or hiddenColor end
@@ -170,19 +183,24 @@ local function read_cache()
   for i = 1, count do
     local startEpoch = tonumber(vars['Event' .. i .. 'StartEpoch'] or '0') or 0
     local endEpoch = tonumber(vars['Event' .. i .. 'EndEpoch'] or '0') or 0
+    local calendar = vars['Event' .. i .. 'Calendar'] or ''
+    local color = feed_color_for_calendar(calendar)
+    if color == '' then
+      color = vars['Event' .. i .. 'Color'] or mutedColor
+    end
     table.insert(events, {
       title = vars['Event' .. i .. 'Title'] or '',
       icon = vars['Event' .. i .. 'Icon'] or '',
       location = vars['Event' .. i .. 'Location'] or '',
       notes = vars['Event' .. i .. 'Notes'] or '',
-      calendar = vars['Event' .. i .. 'Calendar'] or '',
+      calendar = calendar,
       time = vars['Event' .. i .. 'Time'] or '',
       endTime = vars['Event' .. i .. 'EndTime'] or '',
       date = vars['Event' .. i .. 'Date'] or '',
       startEpoch = startEpoch,
       endEpoch = endEpoch,
       allDay = vars['Event' .. i .. 'AllDay'] == '1',
-      color = vars['Event' .. i .. 'Color'] or mutedColor
+      color = color
     })
   end
 

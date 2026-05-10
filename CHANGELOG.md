@@ -20,6 +20,7 @@
 - Refined Dense layout with a wider timeline panel, more row text width, smaller settings color swatches, and Rainmeter-safe symbol fallbacks for emoji/smart punctuation to avoid mojibake.
 - Moved emoji/emote cues out of titles into small color-backed event badges, keeping titles clean while preserving visual shorthand.
 - Made the countdown tag clickable so it glides the timeline back to the current/next event, and hid empty event-badge outlines.
+- Increased the timeline visual tick to 20fps during animation, throttled idle redraws, and replaced text badges with small drawn icon-style badges.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

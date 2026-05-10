@@ -20,6 +20,7 @@ UseSample=0
 DaysAhead=3
 RefreshMinutes=15
 RefreshSeconds=900
+RefreshTicks=18000
 FetchHelperPath=
 MaxRows=6
 CacheLimit=240

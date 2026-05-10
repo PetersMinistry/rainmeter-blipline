@@ -5,12 +5,16 @@ local scrollCurrent = 0
 local scrollTarget = 0
 local userScrolled = false
 local homeAnimating = false
+local lastRenderSecond = -1
 
 local rowBaseY = {94, 134, 174, 214, 254, 294}
 local rowGap = 40
 local hiddenColor = '255,255,255,0'
 local mutedColor = '205,214,224,230'
 local activeColor = '255,199,50,255'
+local noShape = 'Rectangle 0,0,0,0 | Fill Color 0,0,0,0 | StrokeWidth 0'
+local iconFg = '250,253,255,242'
+local iconDim = '8,12,18,86'
 
 local function read_file(path)
   local file = io.open(path, 'r')
@@ -39,6 +43,76 @@ end
 
 local function max_scroll(maxRows)
   return math.max(0, #events - maxRows)
+end
+
+local function icon_shapes(icon, color)
+  if icon == '' then
+    return noShape, noShape, noShape, noShape, noShape
+  end
+
+  local base = 'Rectangle 0,0,18,18,5 | Fill Color ' .. color .. ' | StrokeWidth 1 | Stroke Color 255,255,255,58'
+
+  if icon == 'MEAL' then
+    return base,
+      'Rectangle 5,4,1.4,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Rectangle 8,4,1.4,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Rectangle 12,4,1.6,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Ellipse 4,3,3,3 | Fill Color ' .. iconFg .. ' | StrokeWidth 0'
+  end
+
+  if icon == 'SUN' then
+    return base,
+      'Ellipse 6,6,6,6 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Line 9,3,9,5 | StrokeWidth 1 | Stroke Color ' .. iconFg,
+      'Line 4,9,6,9 | StrokeWidth 1 | Stroke Color ' .. iconFg,
+      'Line 12,12,14,14 | StrokeWidth 1 | Stroke Color ' .. iconFg
+  end
+
+  if icon == 'BOOK' then
+    return base,
+      'Rectangle 4,5,5,8,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Rectangle 10,5,5,8,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Line 9,5,9,14 | StrokeWidth 1 | Stroke Color ' .. iconDim,
+      'Line 5,7,8,7 | StrokeWidth 1 | Stroke Color ' .. iconDim
+  end
+
+  if icon == '+' then
+    return base,
+      'Rectangle 8,4,2,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Rectangle 5,7,8,2,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      noShape,
+      noShape
+  end
+
+  if icon == 'BDAY' then
+    return base,
+      'Rectangle 4,10,10,4,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Rectangle 6,7,6,3,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Rectangle 8,4,2,3,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Ellipse 7,2,4,3 | Fill Color 255,224,90,236 | StrokeWidth 0'
+  end
+
+  if icon == 'LADY' then
+    return base,
+      'Ellipse 7,7,4,4 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Ellipse 4,5,5,5 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Ellipse 9,5,5,5 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Ellipse 7,10,5,5 | Fill Color ' .. iconFg .. ' | StrokeWidth 0'
+  end
+
+  if icon == 'IRON' then
+    return base,
+      'Line 4,14,14,4 | StrokeWidth 2 | Stroke Color ' .. iconFg,
+      'Line 4,4,14,14 | StrokeWidth 2 | Stroke Color ' .. iconFg,
+      'Ellipse 3,13,3,3 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+      'Ellipse 12,13,3,3 | Fill Color ' .. iconFg .. ' | StrokeWidth 0'
+  end
+
+  return base,
+    'Ellipse 7,7,4,4 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
+    noShape,
+    noShape,
+    noShape
 end
 
 local function read_cache()
@@ -105,6 +179,9 @@ local function clear_row(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconStroke', hiddenColor)
+  for i = 1, 5 do
+    SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconShape' .. i, noShape)
+  end
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', '255,255,255,0')
@@ -145,13 +222,19 @@ local function set_row(slot, event, active, headerDate, y)
   if style == 'Focus' and not active then
     detail = ''
   end
+  local shape1, shape2, shape3, shape4, shape5 = icon_shapes(event.icon, event.color)
 
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Y', tostring(math.floor(y + 0.5)))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', row_time_label(event, headerDate))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', event.title)
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', event.icon)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', event.icon ~= '' and event.color or hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconStroke', event.icon ~= '' and '255,255,255,48' or hiddenColor)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconShape1', shape1)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconShape2', shape2)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconShape3', shape3)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconShape4', shape4)
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconShape5', shape5)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Location', detail)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', color)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', textColor)
@@ -207,7 +290,7 @@ function ReadAgenda()
   read_cache()
   lastRead = os.time()
   userScrolled = false
-  Update()
+  Update(true)
 end
 
 function Scroll(direction)
@@ -220,7 +303,7 @@ function Scroll(direction)
   scrollCurrent = scrollTarget
   userScrolled = true
   homeAnimating = false
-  Update()
+  Update(true)
   return ''
 end
 
@@ -232,12 +315,17 @@ function CenterNow()
   scrollTarget = clamp(selected - 2, 0, max_scroll(maxRows))
   userScrolled = true
   homeAnimating = true
-  Update()
+  Update(true)
   return ''
 end
 
-function Update()
+function Update(force)
   local now = os.time()
+  if not force and not homeAnimating and now == lastRenderSecond then
+    return ''
+  end
+  lastRenderSecond = now
+
   local maxRows = read_number_variable('MaxRows', 6, 1, 6)
   apply_style()
   if now - lastRead > 30 then
@@ -275,7 +363,7 @@ function Update()
         homeAnimating = false
         userScrolled = false
       else
-        scrollCurrent = scrollCurrent + (delta * 0.35)
+        scrollCurrent = scrollCurrent + (delta * 0.12)
       end
     end
 

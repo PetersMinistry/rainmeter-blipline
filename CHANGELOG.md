@@ -8,6 +8,7 @@
 - Added a clickable feed color palette: select a feed dot, then choose from twelve swatches instead of typing RGBA values.
 - Reduced the setup palette swatch size so the event-detail controls below it are readable.
 - Separated the palette labels from the swatches so `Feed color palette` and `Selected feed` remain readable.
+- Added immediate settings feedback for palette clicks: selecting a feed updates the label without a full settings refresh, and choosing a swatch repaints the selected feed dot plus shows `saved` before the agenda refresh completes.
 - Added event-detail visibility toggles for calendar name, location, and notes.
 - Widened and reorganized the setup panel so feed status, palette swatches, template buttons, and notes have clearer lanes.
 - Expanded Classic vertically and increased day-separator breathing room to reduce title/detail/date-chip overlap.

@@ -1,6 +1,8 @@
 # Blipline Changelog
 
-## Unreleased
+## 0.3.0 Beta - 2026-05-10
+
+First public beta release.
 
 - Added a release privacy test that blocks packaging when source settings contain private feed URLs, helper paths, runtime feed status, or generated cache data.
 - Updated release/privacy documentation to build from the Git-tracked source tree instead of the live Rainmeter install folder.

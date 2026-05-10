@@ -1,94 +1,96 @@
 # Blipline
 
-A Rainmeter agenda timeline for Google Calendar-style iCal feeds.
+Blipline is a Rainmeter agenda timeline for Google Calendar-style private iCal feeds. It turns upcoming events into a smooth desktop schedule: current item in focus, next-event countdown on the side, and a scrollable timeline for looking ahead or back.
 
-## Purpose
+![Blipline beta preview](docs/screenshots/blipline-beta-preview.png)
 
-Blipline is a practical desktop schedule skin. It shows calendar items in a scrollable timeline, keeps a next-event countdown visible, and starts centered around the current or next event.
+## Download
 
-## Features
+First beta: `v0.3.0-beta.1`
 
-- Timeline-style agenda display with a highlighted current or next event.
-- Side countdown tag for the next event or the active event end time.
-- Mouse-wheel scrolling through cached past and future events.
-- Countdown tag stays clamped within the timeline while pointing at the current/next event position.
-- Sample-data mode when no calendar feed is connected.
-- Safe Demo mode for sample data without deleting saved calendar feed URLs.
-- Settings panel with refresh, open, demo, clipboard feed import, layout templates, event-detail toggles, and per-feed color palette controls.
-- Google Calendar private iCal / ICS feed support.
-- Up to eight iCal feed slots are supported in `UserSettings.inc`; the setup panel imports multiple feed URLs from the clipboard.
-- Merged agenda view across multiple calendar feeds.
-- Calendar names are auto-detected from iCal feeds when available.
-- Calendar colors are auto-detected when a feed publishes color metadata, otherwise Blipline uses the configured feed colors.
-- Basic recurring event expansion for daily, weekly, and monthly iCal rules.
-- Event descriptions/notes are imported for richer Dense display.
-- Unicode and emoji in event titles/details are preserved.
-- Timed events sort ahead of all-day entries on the same date to keep appointment-style schedules readable.
-- 15-minute automatic refresh with manual refresh in settings.
-- Layout templates currently include Classic, Command, Ledger, Metro, Studio, and Daylight.
+Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
-If no Google Calendar iCal URL is set, the skin generates sample events around the current time so the layout can be tested immediately.
+## What It Does
+
+- Shows a timeline-style agenda with the current or next event highlighted.
+- Keeps a side countdown tag visible so the next thing is always obvious.
+- Scrolls through cached past and future events with the mouse wheel.
+- Clicks the countdown tag to glide back to the current or next event.
+- Imports multiple Google Calendar private iCal URLs from the clipboard, one per line.
+- Supports up to eight iCal feed slots.
+- Merges multiple calendars into one readable agenda.
+- Auto-detects calendar names and iCal feed colors when the feed provides them.
+- Lets you assign feed colors from a built-in palette when Google does not expose colors.
+- Includes event detail toggles for calendar name, location, and notes.
+- Handles daily, weekly, monthly, and yearly recurring events.
+- Handles edited single instances of recurring events through `RECURRENCE-ID`.
+- Keeps smaller calendars visible with per-calendar cache backfill.
+- Preserves Unicode and emoji-friendly event text as far as Rainmeter allows.
+- Includes a safe Demo mode with sample events and no private calendar data.
+- Refreshes every 15 minutes, with a manual Refresh button in settings.
+
+## Templates
+
+The beta includes six layout templates. They share the same Classic footprint so switching templates does not make the skin jump wider or taller.
+
+![Blipline template board](docs/screenshots/blipline-template-board.png)
+
+Templates:
+
+- Classic
+- Command
+- Ledger
+- Metro
+- Studio
+- Daylight light mode
 
 ## Load Paths
 
+After installing, load the setup panel first:
+
 ```text
-Blipline\Timeline\Timeline.ini
 Blipline\Control\Settings.ini
 ```
 
-## Google Calendar Setup
-
-Open the settings panel, copy one or more Google Calendar private iCal URLs to the clipboard, one per line, then click Import Clipboard. Blipline currently supports up to eight feed slots.
-
-The raw setting lives here:
+The timeline display is:
 
 ```text
-Skins\Blipline\@Resources\UserSettings.inc
+Blipline\Timeline\Timeline.ini
 ```
 
-The committed release defaults keep all feed URL values blank:
+The beta package opens the settings panel first so new users can import feeds, test Demo mode, pick colors, and choose a template before loading the timeline.
 
-```ini
-CalendarUrl=https://calendar.google.com/calendar/ical/...
-```
+## Google Calendar Setup
 
-Optional display tuning:
+In Google Calendar, copy each calendar private iCal URL. In Blipline settings, place each URL on its own clipboard line, then click Import Clipboard.
 
-```ini
-MaxRows=6
-CacheLimit=240
-CachePastDays=14
-CacheFutureDays=90
-ScrollStep=1
-TimelineStyle=Glass
-CalendarSlots=8
-CalendarColor1=255,199,50,255
-```
+Private iCal URLs are secret read-only links. Anyone with one can read that calendar feed, so do not post them publicly.
 
-Treat that URL as private. Anyone with the secret iCal URL can read that calendar feed.
-
-Use the Demo button to preview sample data without removing saved feed URLs. Use Refresh to return to live calendar data.
-
-## Privacy Notes
+## Privacy
 
 - Private iCal URLs are not committed to this repo.
-- Generated agenda cache files are ignored because they may contain event names, locations, and meeting details.
-- The committed `UserSettings.inc` uses blank calendar URLs for safe packaging.
-- Build release packages from the Git-tracked source tree, not from the live Rainmeter install folder, because the live folder contains personal feed URLs, cache files, and machine-local helper paths.
-- If you connect a real calendar in the live Rainmeter skin, avoid copying the repo default `UserSettings.inc` over your live one.
-- `FetchHelperPath` can point to a local Python executable if Windows PowerShell cannot fetch Google Calendar over HTTPS on a specific machine. Leave it blank for packaging.
+- Generated agenda cache files are ignored because they may contain event titles, locations, notes, and meeting details.
+- The committed `UserSettings.inc` keeps feed URLs, helper paths, and runtime feed status blank.
+- Release packages are built from the Git-tracked source tree, not from the live Rainmeter install folder.
+- Live/local setup files stay local.
 
-## Local Verification
+## Requirements
 
-Run the agenda pipeline test from the repo root:
+- Rainmeter 4.5 or newer.
+- Windows 10 or newer.
+- Private iCal links from Google Calendar or another iCal/ICS-compatible calendar provider.
+
+## Verification
+
+Maintainer checks used for this beta:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-AgendaPipeline.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ReleasePrivacy.ps1
 ```
 
-The agenda test uses temporary fake calendar data only. The release privacy test verifies blank feed URLs, blank helper paths, empty runtime feed status values, and no generated cache files in the source package folder.
+The agenda test uses fake calendar data only. The release privacy test blocks packaging if source settings contain private feed URLs, helper paths, generated cache files, or runtime feed status.
 
 ## Status
 
-Working local prototype. Not packaged for release yet.
+`0.3.0` is the first public beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.

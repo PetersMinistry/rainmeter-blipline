@@ -1,19 +1,25 @@
 # Blipline
 
-Working prototype Rainmeter schedule timeline for Google Calendar-style iCal feeds.
+Rainmeter agenda timeline for Google Calendar-style private iCal feeds.
 
-Load:
+## Load
 
-```text
-Blipline\Timeline\Timeline.ini
-```
-
-Optional setup panel:
+Setup panel:
 
 ```text
 Blipline\Control\Settings.ini
 ```
 
-Use the settings panel to import private Google Calendar iCal URLs from the clipboard, one URL per line, or leave them blank for sample data.
+Timeline:
+
+```text
+Blipline\Timeline\Timeline.ini
+```
+
+## Setup
+
+Copy one or more private iCal URLs to the clipboard, one per line, then click Import Clipboard in the settings panel.
+
+Leave feeds blank or use Demo mode to preview Blipline with sample events.
 
 Private iCal URLs and generated agenda caches should stay local to the installed skin.

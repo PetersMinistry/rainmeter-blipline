@@ -657,7 +657,7 @@ function Get-CalendarContent {
 
     try {
         $client = New-Object System.Net.WebClient
-        $client.Headers.Add('User-Agent', 'Blipline/0.2')
+        $client.Headers.Add('User-Agent', 'Blipline/0.3')
         $client.Headers.Add('Accept', 'text/calendar,text/plain,*/*')
         return Convert-BytesToText ($client.DownloadData($Source))
     }
@@ -672,7 +672,7 @@ function Get-CalendarContent {
             }
             $client = New-Object System.Net.Http.HttpClient($handler)
             $client.Timeout = [TimeSpan]::FromSeconds(25)
-            $client.DefaultRequestHeaders.UserAgent.ParseAdd('Blipline/0.2')
+            $client.DefaultRequestHeaders.UserAgent.ParseAdd('Blipline/0.3')
             return $client.GetStringAsync($Source).GetAwaiter().GetResult()
         }
         catch {
@@ -693,7 +693,7 @@ out_file = sys.argv[2]
 request = urllib.request.Request(
     url,
     headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Blipline/0.2",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Blipline/0.3",
         "Accept": "text/calendar,text/plain,*/*",
     },
 )

@@ -68,28 +68,15 @@ Private iCal URLs are secret read-only links. Anyone with one can read that cale
 
 ## Privacy
 
-- Private iCal URLs are not committed to this repo.
-- Generated agenda cache files are ignored because they may contain event titles, locations, notes, and meeting details.
-- The committed `UserSettings.inc` keeps feed URLs, helper paths, and runtime feed status blank.
-- Release packages are built from the Git-tracked source tree, not from the live Rainmeter install folder.
-- Live/local setup files stay local.
+- Your private iCal URLs stay in your local Rainmeter skin settings.
+- Agenda cache files stay local because they can include event titles, locations, and notes.
+- Demo mode lets you preview the layout without connecting a calendar.
 
 ## Requirements
 
 - Rainmeter 4.5 or newer.
 - Windows 10 or newer.
 - Private iCal links from Google Calendar or another iCal/ICS-compatible calendar provider.
-
-## Verification
-
-Maintainer checks used for this beta:
-
-```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-AgendaPipeline.ps1
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\Test-ReleasePrivacy.ps1
-```
-
-The agenda test uses fake calendar data only. The release privacy test blocks packaging if source settings contain private feed URLs, helper paths, generated cache files, or runtime feed status.
 
 ## Status
 

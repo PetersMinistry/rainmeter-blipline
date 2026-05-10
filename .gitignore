@@ -4,6 +4,7 @@ Skins/*/@Resources/Cache/*
 
 # Release/build output
 dist/
+tools/
 *.rmskin
 *.zip
 

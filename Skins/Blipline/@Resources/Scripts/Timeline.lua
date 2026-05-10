@@ -17,6 +17,12 @@ local iconFg = '250,253,255,242'
 local iconDim = '8,12,18,86'
 local daySeparatorGap = 16
 
+local function skin_var(name, fallback)
+  local value = SKIN:GetVariable(name)
+  if value == nil or value == '' then return fallback end
+  return value
+end
+
 local function read_file(path)
   local file = io.open(path, 'r')
   if not file then return nil end
@@ -134,10 +140,10 @@ end
 local function set_separator(slot, event, y)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerText', event.date)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(math.floor(y - 18 + 0.5)))
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerLine', '255,255,255,34')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerLine', skin_var('DividerLineColor', '255,255,255,34'))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerAccent', color_alpha(event.color, 176))
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerFill', '8,12,18,178')
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerTextColor', '202,211,224,218')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerFill', skin_var('DividerFillColor', '8,12,18,178'))
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerTextColor', skin_var('DividerTextColor', '202,211,224,218'))
 end
 
 local function read_cache()
@@ -221,9 +227,9 @@ end
 
 local function set_row(slot, event, active, headerDate, y)
   local style = SKIN:GetVariable('TimelineStyle') or 'Glass'
-  local textColor = active and '255,226,84,255' or '245,247,252,238'
-  local subColor = active and '230,214,156,238' or '170,178,190,226'
-  local color = active and activeColor or event.color
+  local textColor = active and skin_var('RowActiveTextColor', '255,226,84,255') or skin_var('RowNormalTextColor', '245,247,252,238')
+  local subColor = active and skin_var('RowActiveSubColor', '230,214,156,238') or skin_var('RowNormalSubColor', '170,178,190,226')
+  local color = active and skin_var('AccentColor', activeColor) or event.color
   local detailParts = {}
   if event.calendar ~= '' then table.insert(detailParts, event.calendar) end
   if event.location ~= '' then table.insert(detailParts, event.location) end
@@ -267,25 +273,91 @@ end
 
 local function apply_style()
   local style = SKIN:GetVariable('TimelineStyle') or 'Glass'
+  local template = SKIN:GetVariable('LayoutTemplate') or 'Classic'
+
+  local presets = {
+    Classic = {
+      title = '12', sub = '9', titleW = '276', detailW = '286', timelineX = '232', timeX = '210', iconX = '258', titleX = '286', baseY = {94, 134, 174, 214, 254, 294}, gap = 40,
+      panel = '12,16,22,150', edge = '255,255,255,62', line = '225,230,238,96', text = '245,247,252,238', subc = '170,178,190,226',
+      activeText = '255,226,84,255', activeSub = '230,214,156,238', accent = '255,199,50,255', accentSoft = '255,199,50,112',
+      dividerLine = '255,255,255,34', dividerFill = '8,12,18,178', dividerText = '202,211,224,218', tag = '12,16,22,206', tagSub = '224,214,162,238',
+      sheen = '255,255,255,5', glow1 = '255,199,50,42', glow2 = '255,199,50,86'
+    },
+    Command = {
+      title = '11', sub = '8', titleW = '292', detailW = '300', timelineX = '220', timeX = '198', iconX = '246', titleX = '274', baseY = {88, 124, 160, 196, 232, 268}, gap = 36,
+      panel = '3,8,7,222', edge = '85,255,170,108', line = '82,255,170,96', text = '224,255,238,244', subc = '140,207,180,232',
+      activeText = '96,255,180,255', activeSub = '185,255,218,238', accent = '96,255,180,255', accentSoft = '96,255,180,100',
+      dividerLine = '82,255,170,44', dividerFill = '3,24,18,220', dividerText = '178,255,216,230', tag = '3,16,13,238', tagSub = '164,246,204,238',
+      sheen = '255,255,255,0', glow1 = '96,255,180,34', glow2 = '96,255,180,76'
+    },
+    Ledger = {
+      title = '11', sub = '8', titleW = '286', detailW = '298', timelineX = '238', timeX = '216', iconX = '264', titleX = '292', baseY = {96, 134, 172, 210, 248, 286}, gap = 38,
+      panel = '16,15,13,220', edge = '238,215,170,86', line = '238,215,170,72', text = '249,241,226,244', subc = '199,184,158,232',
+      activeText = '255,205,92,255', activeSub = '238,216,174,238', accent = '255,205,92,255', accentSoft = '255,205,92,100',
+      dividerLine = '238,215,170,34', dividerFill = '26,23,18,224', dividerText = '229,211,181,230', tag = '20,17,12,238', tagSub = '238,216,174,238',
+      sheen = '255,255,255,4', glow1 = '255,205,92,36', glow2 = '255,205,92,78'
+    },
+    Metro = {
+      title = '12', sub = '8', titleW = '288', detailW = '296', timelineX = '214', timeX = '192', iconX = '242', titleX = '270', baseY = {92, 132, 172, 212, 252, 292}, gap = 40,
+      panel = '8,13,24,214', edge = '86,160,255,104', line = '105,180,255,86', text = '236,244,255,246', subc = '154,180,216,232',
+      activeText = '130,204,255,255', activeSub = '196,226,255,238', accent = '104,170,255,255', accentSoft = '104,170,255,104',
+      dividerLine = '105,180,255,38', dividerFill = '8,20,38,224', dividerText = '198,225,255,230', tag = '6,15,30,238', tagSub = '188,218,255,238',
+      sheen = '255,255,255,6', glow1 = '104,170,255,34', glow2 = '104,170,255,82'
+    },
+    Studio = {
+      title = '12', sub = '8', titleW = '288', detailW = '296', timelineX = '228', timeX = '206', iconX = '254', titleX = '282', baseY = {92, 132, 174, 216, 258, 300}, gap = 42,
+      panel = '14,10,16,222', edge = '238,120,150,96', line = '238,120,150,72', text = '252,239,246,246', subc = '205,169,187,232',
+      activeText = '255,159,194,255', activeSub = '242,203,219,238', accent = '238,120,150,255', accentSoft = '238,120,150,104',
+      dividerLine = '238,120,150,38', dividerFill = '28,14,24,224', dividerText = '242,203,219,230', tag = '24,12,21,238', tagSub = '242,203,219,238',
+      sheen = '255,255,255,5', glow1 = '238,120,150,34', glow2 = '238,120,150,82'
+    },
+    Daylight = {
+      title = '12', sub = '8', titleW = '288', detailW = '296', timelineX = '228', timeX = '206', iconX = '254', titleX = '282', baseY = {94, 134, 174, 214, 254, 294}, gap = 40,
+      panel = '250,252,255,238', edge = '32,40,55,68', line = '54,68,90,74', text = '22,27,36,246', subc = '84,95,112,234',
+      activeText = '178,114,0,255', activeSub = '98,78,40,238', accent = '223,150,28,255', accentSoft = '223,150,28,104',
+      dividerLine = '54,68,90,30', dividerFill = '255,255,255,232', dividerText = '58,68,84,232', tag = '255,255,255,246', tagSub = '98,78,40,238',
+      sheen = '255,255,255,0', glow1 = '223,150,28,34', glow2 = '223,150,28,78'
+    }
+  }
+
+  local preset = presets[template] or presets.Classic
+  rowBaseY = preset.baseY
+  rowGap = preset.gap
   if style == 'Dense' then
-    SKIN:Bang('!SetVariable', 'RowTitleSize', '10')
-    SKIN:Bang('!SetVariable', 'RowSubSize', '8')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '276')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '286')
-    SKIN:Bang('!SetVariable', 'PanelFill', '10,14,20,166')
+    preset.title = '10'
+    preset.sub = '8'
   elseif style == 'Focus' then
-    SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
-    SKIN:Bang('!SetVariable', 'RowSubSize', '8')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '276')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '286')
-    SKIN:Bang('!SetVariable', 'PanelFill', '8,11,16,178')
-  else
-    SKIN:Bang('!SetVariable', 'RowTitleSize', '12')
-    SKIN:Bang('!SetVariable', 'RowSubSize', '9')
-    SKIN:Bang('!SetVariable', 'RowTitleW', '276')
-    SKIN:Bang('!SetVariable', 'RowDetailW', '286')
-    SKIN:Bang('!SetVariable', 'PanelFill', '12,16,22,150')
+    preset.sub = '8'
   end
+
+  SKIN:Bang('!SetVariable', 'RowTitleSize', preset.title)
+  SKIN:Bang('!SetVariable', 'RowSubSize', preset.sub)
+  SKIN:Bang('!SetVariable', 'RowTitleW', preset.titleW)
+  SKIN:Bang('!SetVariable', 'RowDetailW', preset.detailW)
+  SKIN:Bang('!SetVariable', 'TimelineX', preset.timelineX)
+  SKIN:Bang('!SetVariable', 'TimeX', preset.timeX)
+  SKIN:Bang('!SetVariable', 'IconX', preset.iconX)
+  SKIN:Bang('!SetVariable', 'TitleX', preset.titleX)
+  SKIN:Bang('!SetVariable', 'PanelFill', preset.panel)
+  SKIN:Bang('!SetVariable', 'PanelEdge', preset.edge)
+  SKIN:Bang('!SetVariable', 'LineColor', preset.line)
+  SKIN:Bang('!SetVariable', 'TextColor', preset.text)
+  SKIN:Bang('!SetVariable', 'SoftText', preset.text)
+  SKIN:Bang('!SetVariable', 'MutedText', preset.subc)
+  SKIN:Bang('!SetVariable', 'AccentColor', preset.accent)
+  SKIN:Bang('!SetVariable', 'AccentSoft', preset.accentSoft)
+  SKIN:Bang('!SetVariable', 'RowNormalTextColor', preset.text)
+  SKIN:Bang('!SetVariable', 'RowNormalSubColor', preset.subc)
+  SKIN:Bang('!SetVariable', 'RowActiveTextColor', preset.activeText)
+  SKIN:Bang('!SetVariable', 'RowActiveSubColor', preset.activeSub)
+  SKIN:Bang('!SetVariable', 'DividerLineColor', preset.dividerLine)
+  SKIN:Bang('!SetVariable', 'DividerFillColor', preset.dividerFill)
+  SKIN:Bang('!SetVariable', 'DividerTextColor', preset.dividerText)
+  SKIN:Bang('!SetVariable', 'CountdownTagFill', preset.tag)
+  SKIN:Bang('!SetVariable', 'CountdownUnitColor', preset.tagSub)
+  SKIN:Bang('!SetVariable', 'PanelSheen', preset.sheen)
+  SKIN:Bang('!SetVariable', 'ActiveGlow1', preset.glow1)
+  SKIN:Bang('!SetVariable', 'ActiveGlow2', preset.glow2)
 end
 
 local function find_selected(now)

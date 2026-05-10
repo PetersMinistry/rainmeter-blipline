@@ -327,7 +327,7 @@ function Expand-IcsEvent {
     if ($rule.ContainsKey('FREQ')) {
         $freq = $rule['FREQ'].ToUpperInvariant()
     }
-    if ($freq -notin @('DAILY', 'WEEKLY', 'MONTHLY')) {
+    if ($freq -notin @('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY')) {
         return @($Event)
     }
 
@@ -384,6 +384,9 @@ function Expand-IcsEvent {
         }
         elseif ($freq -eq 'MONTHLY') {
             $candidate = $candidate.AddMonths($interval)
+        }
+        elseif ($freq -eq 'YEARLY') {
+            $candidate = $candidate.AddYears($interval)
         }
     }
 
@@ -705,6 +708,8 @@ function Write-AgendaCache {
     $cacheLimit = [Math]::Max($minRows, $cacheLimit)
     $pastDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CachePastDays' -Default '14')
     $futureDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheFutureDays' -Default '90')
+    $perCalendarMinimum = [int](Get-SettingValue -Path $SettingsPath -Name 'CachePerCalendarMinimum' -Default '24')
+    $perCalendarMinimum = [Math]::Max(0, [Math]::Min(120, $perCalendarMinimum))
     $windowStart = $today.AddDays(-[Math]::Max(0, $pastDays))
     $windowEnd = $today.AddDays([Math]::Max(1, $futureDays))
     $sorted = @(
@@ -726,6 +731,15 @@ function Write-AgendaCache {
         $timelineEvents += @($past | Select-Object -Last $pastLimit)
     }
     $timelineEvents += @($future | Select-Object -First $futureLimit)
+    if ($perCalendarMinimum -gt 0) {
+        foreach ($group in ($sorted | Group-Object Calendar)) {
+            $calendarPast = @($group.Group | Where-Object { $_.End -lt $now } | Select-Object -Last ([Math]::Min($maxRows, $perCalendarMinimum)))
+            $calendarFuture = @($group.Group | Where-Object { $_.End -ge $now } | Select-Object -First $perCalendarMinimum)
+            $timelineEvents += @($calendarPast + $calendarFuture)
+        }
+    }
+
+    $effectiveCacheLimit = [Math]::Max($cacheLimit, @($timelineEvents).Count)
 
     $filtered = @()
     $seen = @{}
@@ -739,7 +753,7 @@ function Write-AgendaCache {
         $seen[$key] = $true
         $filtered = @($filtered + $event)
 
-        if ($filtered.Count -ge $cacheLimit) {
+        if ($filtered.Count -ge $effectiveCacheLimit) {
             break
         }
     }
@@ -752,7 +766,7 @@ function Write-AgendaCache {
                 @{ Expression = { $_.Start } },
                 @{ Expression = { $_.Calendar } },
                 @{ Expression = { $_.Title } } |
-            Select-Object -First $cacheLimit
+            Select-Object -First $effectiveCacheLimit
     )
 
     $lines = New-Object System.Collections.Generic.List[string]

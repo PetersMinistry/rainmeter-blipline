@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added yearly `RRULE` expansion so birthday/anniversary calendars imported from Google Calendar appear in the visible agenda window instead of staying pinned to their original old dates.
+- Added per-calendar cache backfill with `CachePerCalendarMinimum` so smaller calendars remain visible alongside very busy recurring feeds.
 - Increased the generated agenda cache beyond the six visible rows so dense calendars have enough upcoming events for paging.
 - Added lightweight auto-paging in the timeline when more events are cached than fit in the visible space.
 - Sorted timed events ahead of all-day entries on the same date so renewal-style all-day items do not crowd out scheduled appointments.

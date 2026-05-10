@@ -26,6 +26,7 @@ RefreshTicks=18000
 FetchHelperPath=
 MaxRows=6
 CacheLimit=240
+CachePerCalendarMinimum=24
 CachePastDays=14
 CacheFutureDays=90
 ScrollStep=1

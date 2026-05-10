@@ -26,7 +26,6 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Handles edited single instances of recurring events through `RECURRENCE-ID`.
 - Keeps smaller calendars visible with per-calendar cache backfill.
 - Preserves Unicode and emoji-friendly event text as far as Rainmeter allows.
-- Includes a safe Demo mode with sample events and no private calendar data.
 - Refreshes every 15 minutes, with a manual Refresh button in settings.
 
 ## Templates
@@ -61,7 +60,7 @@ The timeline display is:
 Blipline\Timeline\Timeline.ini
 ```
 
-The beta package opens the settings panel first so new users can import feeds, test Demo mode, pick colors, and choose a template before loading the timeline.
+The beta package opens the settings panel first so new users can import feeds, pick colors, and choose a template before loading the timeline.
 
 ![Blipline settings panel](docs/screenshots/blipline-settings.png)
 
@@ -75,7 +74,6 @@ Private iCal URLs are secret read-only links. Anyone with one can read that cale
 
 - Your private iCal URLs stay in your local Rainmeter skin settings.
 - Agenda cache files stay local because they can include event titles, locations, and notes.
-- Demo mode lets you preview the layout without connecting a calendar.
 
 ## Requirements
 

@@ -20,6 +20,6 @@ Blipline\Timeline\Timeline.ini
 
 Copy one or more private iCal URLs to the clipboard, one per line, then click Import Clipboard in the settings panel.
 
-Leave feeds blank or use Demo mode to preview Blipline with sample events.
+Leave feeds blank to preview Blipline with sample events.
 
 Private iCal URLs and generated agenda caches should stay local to the installed skin.

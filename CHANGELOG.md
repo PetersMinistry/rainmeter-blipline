@@ -14,7 +14,6 @@ First public beta release.
 - Event detail toggles for calendar name, location, and notes.
 - Six layout templates: Classic, Command, Ledger, Metro, Studio, and Daylight.
 - Light-mode option through the Daylight template.
-- Demo mode for trying Blipline without connecting a calendar.
 
 ### Improved
 

@@ -26,6 +26,85 @@ function Get-SettingValue {
     return $Default
 }
 
+function Set-SettingValue {
+    param(
+        [string[]]$Lines,
+        [string]$Name,
+        [string]$Value
+    )
+
+    $escaped = [regex]::Escape($Name)
+    $pattern = "^$escaped="
+    $replacement = "$Name=$Value"
+    $found = $false
+    $updated = foreach ($line in $Lines) {
+        if (!$found -and $line -match $pattern) {
+            $found = $true
+            $replacement
+        }
+        else {
+            $line
+        }
+    }
+
+    if ($found) {
+        return @($updated)
+    }
+
+    $insertAt = 0
+    for ($i = 0; $i -lt $updated.Count; $i++) {
+        if ($updated[$i] -match '^\[Variables\]') {
+            $insertAt = $i + 1
+            break
+        }
+    }
+
+    if ($insertAt -le 0) {
+        return @($replacement) + @($updated)
+    }
+
+    return @($updated[0..($insertAt - 1)]) + @($replacement) + @($updated[$insertAt..($updated.Count - 1)])
+}
+
+function Save-FeedStatus {
+    param(
+        [string]$Path,
+        [object[]]$Statuses,
+        [int]$MaxFeeds,
+        [string]$Summary
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Path) -or !(Test-Path -LiteralPath $Path)) {
+        return
+    }
+
+    $lines = @(Get-Content -LiteralPath $Path)
+    $lines = @(Set-SettingValue -Lines $lines -Name 'FeedStatusSummary' -Value (($Summary -replace '[\r\n=]', ' ').Trim()))
+
+    for ($i = 1; $i -le $MaxFeeds; $i++) {
+        $status = @($Statuses | Where-Object { $_.Index -eq $i } | Select-Object -First 1)
+        $name = ''
+        $result = ''
+        $count = ''
+        $color = '255,255,255,0'
+
+        if ($status.Count -gt 0) {
+            $name = Convert-DisplayText $status[0].Name
+            $result = Convert-DisplayText $status[0].Result
+            $count = [string]$status[0].Count
+            $color = if ($status[0].Color) { $status[0].Color } else { '205,214,224,230' }
+        }
+
+        $lines = @(Set-SettingValue -Lines $lines -Name "Feed${i}Name" -Value $name)
+        $lines = @(Set-SettingValue -Lines $lines -Name "Feed${i}Result" -Value $result)
+        $lines = @(Set-SettingValue -Lines $lines -Name "Feed${i}Count" -Value $count)
+        $lines = @(Set-SettingValue -Lines $lines -Name "Feed${i}Color" -Value $color)
+    }
+
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllLines($Path, $lines, $utf8NoBom)
+}
+
 function Convert-IcsText {
     param([string]$Text)
     if ($null -eq $Text) { return '' }
@@ -511,6 +590,7 @@ function Get-CalendarFeeds {
         $defaultColor = $defaultColors[($i - 1) % $defaultColors.Count]
 
         $feeds += [pscustomobject]@{
+            Index = $i
             Url = $url
             Name = Get-SettingValue -Path $Path -Name "CalendarName$i"
             FallbackName = "Calendar $i"
@@ -718,7 +798,10 @@ function Write-AgendaCache {
 
 try {
     $useSample = Get-SettingValue -Path $SettingsPath -Name 'UseSample' -Default '0'
+    $maxStatusFeeds = [int](Get-SettingValue -Path $SettingsPath -Name 'CalendarSlots' -Default '8')
+    $maxStatusFeeds = [Math]::Max(3, [Math]::Min(12, $maxStatusFeeds))
     if ($useSample -eq '1') {
+        Save-FeedStatus -Path $SettingsPath -Statuses @() -MaxFeeds $maxStatusFeeds -Summary 'Demo data'
         Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Demo data'
         return
     }
@@ -731,11 +814,13 @@ try {
     $parseWindowEnd = $today.AddDays([Math]::Max(31, $futureDays))
 
     if ($feeds.Count -eq 0) {
+        Save-FeedStatus -Path $SettingsPath -Statuses @() -MaxFeeds $maxStatusFeeds -Summary 'No feeds configured'
         Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Sample data'
         return
     }
 
     $allEvents = New-Object System.Collections.Generic.List[object]
+    $feedStatuses = New-Object System.Collections.Generic.List[object]
     $successCount = 0
     $failureCount = 0
 
@@ -754,14 +839,29 @@ try {
             $calendarColor = if (![string]::IsNullOrWhiteSpace($detectedColor)) { $detectedColor } else { $feed.Color }
             $events = Parse-IcsEvents -Content $content -CalendarName $calendarName -Color $calendarColor -WindowStart $parseWindowStart -WindowEnd $parseWindowEnd
             foreach ($event in $events) { $allEvents.Add($event) }
+            $feedStatuses.Add([pscustomobject]@{
+                Index = $feed.Index
+                Name = $calendarName
+                Result = 'OK'
+                Count = @($events).Count
+                Color = $calendarColor
+            })
             $successCount++
         }
         catch {
+            $feedStatuses.Add([pscustomobject]@{
+                Index = $feed.Index
+                Name = if (![string]::IsNullOrWhiteSpace($feed.Name)) { $feed.Name } else { $feed.FallbackName }
+                Result = 'Failed'
+                Count = 0
+                Color = $feed.Color
+            })
             $failureCount++
         }
     }
 
     if ($successCount -eq 0) {
+        Save-FeedStatus -Path $SettingsPath -Statuses $feedStatuses.ToArray() -MaxFeeds $maxStatusFeeds -Summary ("0 of {0} feed(s) updated" -f $feeds.Count)
         if (!(Test-AgendaCacheExists -Path $OutputPath)) {
             Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Refresh failed - sample data'
         }
@@ -774,6 +874,7 @@ try {
     else {
         "Updated $successCount feed(s)"
     }
+    Save-FeedStatus -Path $SettingsPath -Statuses $feedStatuses.ToArray() -MaxFeeds $maxStatusFeeds -Summary $status
     Write-AgendaCache -Events $allEvents.ToArray() -Path $OutputPath -Status $status
 }
 catch {

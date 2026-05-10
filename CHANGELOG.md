@@ -24,6 +24,7 @@
 - Added subtle day separators with date chips and hairlines between visible event groups, replacing repeated day prefixes in the time column.
 - Added an Import Clipboard flow for calendar feeds: copy multiple private iCal URLs one per line, then import them into the configured feed slots in one action.
 - Simplified feed setup around Import Clipboard, removed individual URL entry boxes, added Reset Feeds, and surfaced import/reset confirmation text.
+- Added detected calendar status rows in settings, including safe per-slot name, OK/failed state, event count, and color dot; import now assigns a distinct color palette across feed slots.
 
 ## 0.2.0 Working Prototype - 2026-05-09
 

@@ -70,6 +70,7 @@ try {
     $singleEnd = $tomorrow.AddHours(14)
     $allDay = $tomorrow.AddDays(2).ToString('yyyyMMdd')
     $yearlyStart = $today.AddDays(6).AddYears(-2)
+    $weeklyStart = $tomorrow.AddDays(4).AddHours(18)
     $extraEvents = for ($i = 1; $i -le 8; $i++) {
         $extraStart = $tomorrow.AddDays(3).AddHours(8 + $i)
         @(
@@ -127,6 +128,20 @@ try {
         'SUMMARY:Birthday Marker'
         'END:VEVENT'
         'BEGIN:VEVENT'
+        'UID:weekly-override-1@example.test'
+        ('DTSTART:{0}' -f $weeklyStart.ToString("yyyyMMdd'T'HHmmss"))
+        ('DTEND:{0}' -f $weeklyStart.AddHours(1).ToString("yyyyMMdd'T'HHmmss"))
+        'RRULE:FREQ=WEEKLY;COUNT=3'
+        'SUMMARY:Weekly Study'
+        'END:VEVENT'
+        'BEGIN:VEVENT'
+        'UID:weekly-override-1@example.test'
+        ('RECURRENCE-ID:{0}' -f $weeklyStart.ToString("yyyyMMdd'T'HHmmss"))
+        ('DTSTART:{0}' -f $weeklyStart.ToString("yyyyMMdd'T'HHmmss"))
+        ('DTEND:{0}' -f $weeklyStart.AddHours(1).ToString("yyyyMMdd'T'HHmmss"))
+        'SUMMARY:Cancelled - Weekly Study'
+        'END:VEVENT'
+        'BEGIN:VEVENT'
         'UID:cancelled-1@example.test'
         ('DTSTART:{0}' -f $tomorrow.AddHours(15).ToString("yyyyMMdd'T'HHmmss"))
         ('DTEND:{0}' -f $tomorrow.AddHours(16).ToString("yyyyMMdd'T'HHmmss"))
@@ -169,6 +184,7 @@ try {
     Assert-True ($feedText -match 'Client Review') 'Single event was not imported.'
     Assert-True ($feedText -match 'All Day Planning') 'All-day event was not imported.'
     Assert-True ($feedText -match 'Birthday Marker') 'Yearly recurring event was not expanded into the cache window.'
+    Assert-True ($feedText -match 'Cancelled - Weekly Study') 'Edited recurring instance did not replace the generated master occurrence.'
     Assert-True ($feedText -notmatch 'Cancelled Meeting') 'Cancelled event was imported.'
     Assert-True ($feedText -notmatch 'Old Sync') 'Title-level cancelled event was imported.'
     Assert-True ($feedText -notmatch [regex]::Escape($excluded)) 'Excluded recurring date still appeared.'

@@ -460,6 +460,7 @@ function Parse-IcsEvents {
     }
 
     $events = New-Object System.Collections.Generic.List[object]
+    $rawEvents = New-Object System.Collections.Generic.List[object]
     $inEvent = $false
     $current = @{}
 
@@ -472,33 +473,7 @@ function Parse-IcsEvents {
 
         if ($line -eq 'END:VEVENT') {
             $inEvent = $false
-            $status = ''
-            if ($current.ContainsKey('STATUS')) {
-                $status = $current['STATUS'].ToUpperInvariant()
-            }
-            if ($status -eq 'CANCELLED') {
-                continue
-            }
-
-            $start = Convert-IcsDate $current['DTSTART']
-            $end = Convert-IcsDate $current['DTEND']
-            if ($start) {
-                $allDay = $current['DTSTART_ALLDAY'] -eq '1'
-                if (!$end) {
-                    $end = if ($allDay) { $start.AddDays(1) } else { $start.AddMinutes(30) }
-                }
-                $title = Convert-IcsText $current['SUMMARY']
-                if (!$title) { $title = 'Calendar event' }
-                if ($title -match '^(?i:cancelled|canceled)\b') {
-                    continue
-                }
-                $location = Convert-IcsText $current['LOCATION']
-                $notes = Convert-IcsText $current['DESCRIPTION']
-                $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -Notes $notes -AllDay:$allDay -Color $Color -Calendar $CalendarName
-                foreach ($event in (Expand-IcsEvent -Event $baseEvent -RuleText $current['RRULE'] -ExDates @($current['EXDATE']) -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
-                    $events.Add($event)
-                }
-            }
+            $rawEvents.Add($current.Clone())
             continue
         }
 
@@ -519,6 +494,9 @@ function Parse-IcsEvents {
         elseif ($name -eq 'SUMMARY' -or $name -eq 'LOCATION' -or $name -eq 'DESCRIPTION') {
             $current[$name] = $value
         }
+        elseif ($name -eq 'UID' -or $name -eq 'RECURRENCE-ID') {
+            $current[$name] = $value
+        }
         elseif ($name -eq 'STATUS' -or $name -eq 'RRULE') {
             $current[$name] = $value
         }
@@ -529,6 +507,72 @@ function Parse-IcsEvents {
                 if ($date) { $dates += $date }
             }
             $current['EXDATE'] = @($current['EXDATE']) + $dates
+        }
+    }
+
+    $overrideDatesByUid = @{}
+    foreach ($item in $rawEvents) {
+        if (!$item.ContainsKey('UID') -or !$item.ContainsKey('RECURRENCE-ID')) {
+            continue
+        }
+
+        $uid = $item['UID']
+        $recurrenceDate = Convert-IcsDate $item['RECURRENCE-ID']
+        if ([string]::IsNullOrWhiteSpace($uid) -or !$recurrenceDate) {
+            continue
+        }
+
+        if (!$overrideDatesByUid.ContainsKey($uid)) {
+            $overrideDatesByUid[$uid] = @()
+        }
+        $overrideDatesByUid[$uid] = @($overrideDatesByUid[$uid] + $recurrenceDate)
+    }
+
+    foreach ($current in $rawEvents) {
+        $status = ''
+        if ($current.ContainsKey('STATUS')) {
+            $status = $current['STATUS'].ToUpperInvariant()
+        }
+        if ($status -eq 'CANCELLED') {
+            continue
+        }
+
+        $start = Convert-IcsDate $current['DTSTART']
+        $end = Convert-IcsDate $current['DTEND']
+        if (!$start) {
+            continue
+        }
+
+        $allDay = $current['DTSTART_ALLDAY'] -eq '1'
+        if (!$end) {
+            $end = if ($allDay) { $start.AddDays(1) } else { $start.AddMinutes(30) }
+        }
+        $title = Convert-IcsText $current['SUMMARY']
+        if (!$title) { $title = 'Calendar event' }
+
+        $hasRecurrenceId = $current.ContainsKey('RECURRENCE-ID') -and ![string]::IsNullOrWhiteSpace($current['RECURRENCE-ID'])
+        if (!$hasRecurrenceId -and $title -match '^(?i:cancelled|canceled)\b') {
+            continue
+        }
+
+        $location = Convert-IcsText $current['LOCATION']
+        $notes = Convert-IcsText $current['DESCRIPTION']
+        $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -Notes $notes -AllDay:$allDay -Color $Color -Calendar $CalendarName
+
+        if ($hasRecurrenceId) {
+            if ($baseEvent.End -ge $WindowStart -and $baseEvent.Start -lt $WindowEnd) {
+                $events.Add($baseEvent)
+            }
+            continue
+        }
+
+        $exDates = @($current['EXDATE'])
+        if ($current.ContainsKey('UID') -and $overrideDatesByUid.ContainsKey($current['UID'])) {
+            $exDates += @($overrideDatesByUid[$current['UID']])
+        }
+
+        foreach ($event in (Expand-IcsEvent -Event $baseEvent -RuleText $current['RRULE'] -ExDates $exDates -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
+            $events.Add($event)
         }
     }
 

@@ -6,6 +6,8 @@ local scrollTarget = 0
 local userScrolled = false
 local homeAnimating = false
 local lastRenderSecond = -1
+local previewScale = nil
+local currentScale = 1
 
 local rowBaseY = {94, 134, 174, 214, 254, 294}
 local rowGap = 40
@@ -53,6 +55,34 @@ local function clamp(value, minValue, maxValue)
   if value < minValue then return minValue end
   if value > maxValue then return maxValue end
   return value
+end
+
+local function round(value)
+  return math.floor(value + 0.5)
+end
+
+local function scaled(value, scale, minValue)
+  local output = round((tonumber(value) or 0) * scale)
+  if minValue and output < minValue then output = minValue end
+  return tostring(output)
+end
+
+local function read_scale()
+  local minScale = read_number_variable('UiScaleMin', 70, 50, 100)
+  local maxScale = read_number_variable('UiScaleMax', 145, minScale, 200)
+  local rawScale = previewScale or tonumber(SKIN:GetVariable('UiScale') or '') or 100
+  rawScale = clamp(math.floor(rawScale + 0.5), minScale, maxScale)
+  return rawScale / 100, rawScale
+end
+
+local function scale_x(value, scale, anchor)
+  local number = tonumber(value) or 0
+  return tostring(round(anchor + ((number - anchor) * scale)))
+end
+
+local function scale_y(value, scale, anchor)
+  local number = tonumber(value) or 0
+  return tostring(round(anchor + ((number - anchor) * scale)))
 end
 
 local function max_scroll(maxRows)
@@ -242,7 +272,7 @@ local function clear_row(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', '255,255,255,0')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'SubColor', '255,255,255,0')
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', '5')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', scaled(5, currentScale, 3))
   clear_separator(slot)
 end
 
@@ -296,7 +326,7 @@ local function set_row(slot, event, active, headerDate, y)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Color', color)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'TextColor', textColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'SubColor', subColor)
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', active and '12' or '8')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', scaled(active and 12 or 8, currentScale, 4))
 end
 
 local function apply_style()
@@ -382,17 +412,68 @@ local function apply_style()
     end
   end
 
+  local scale, scalePercent = read_scale()
+  currentScale = scale
+  local anchorX = tonumber(classic.panelX) or 92
+  local anchorY = tonumber(classic.panelY) or 22
+  local xKeys = {
+    'timelineX', 'timeX', 'iconX', 'titleX', 'panelX', 'headerX', 'calX',
+    'sourceX', 'scrollX', 'connectorX',
+    'divLeftX', 'divRightX', 'divChipX', 'divDotX', 'divTextX'
+  }
+  local yKeys = { 'panelY', 'headerY', 'calY', 'sourceY', 'lineY', 'scrollY' }
+  local sizeKeys = {
+    'titleW', 'detailW', 'panelW', 'panelH', 'panelRadius', 'sourceW',
+    'lineH', 'scrollW', 'scrollH', 'connectorW', 'divLeftW', 'divRightW'
+  }
+
+  for _, key in ipairs(xKeys) do
+    preset[key] = scale_x(preset[key], scale, anchorX)
+  end
+  for _, key in ipairs(yKeys) do
+    preset[key] = scale_y(preset[key], scale, anchorY)
+  end
+  for _, key in ipairs(sizeKeys) do
+    preset[key] = scaled(preset[key], scale, key == 'panelRadius' and 2 or 1)
+  end
+  preset.countdownX = scaled(preset.countdownX, scale, 0)
+  preset.countdownTextX = scaled(preset.countdownTextX, scale, 20)
+
+  local scaledBaseY = {}
+  for index, y in ipairs(preset.baseY) do
+    scaledBaseY[index] = round(anchorY + (((tonumber(y) or 0) - anchorY) * scale))
+  end
+  preset.baseY = scaledBaseY
+  preset.gap = math.max(28, round((tonumber(preset.gap) or 48) * scale))
+  daySeparatorGap = math.max(14, round(20 * scale))
+
   rowBaseY = preset.baseY
   rowGap = preset.gap
   if style == 'Dense' then
-    preset.title = '10'
-    preset.sub = '8'
+    preset.title = tostring(math.max(7, round(10 * scale)))
+    preset.sub = tostring(math.max(7, round(8 * scale)))
   elseif style == 'Focus' then
-    preset.sub = '8'
+    preset.title = scaled(preset.title, scale, 8)
+    preset.sub = tostring(math.max(7, round(8 * scale)))
+  else
+    preset.title = scaled(preset.title, scale, 8)
+    preset.sub = scaled(preset.sub, scale, 7)
   end
 
+  local panelX = tonumber(preset.panelX) or 92
+  local panelY = tonumber(preset.panelY) or 22
+  local panelW = tonumber(preset.panelW) or 526
+  local panelH = tonumber(preset.panelH) or 446
+  local handleSize = math.max(16, round(18 * scale))
+
+  SKIN:Bang('!SetVariable', 'UiScale', tostring(scalePercent))
   SKIN:Bang('!SetVariable', 'RowTitleSize', preset.title)
   SKIN:Bang('!SetVariable', 'RowSubSize', preset.sub)
+  SKIN:Bang('!SetVariable', 'RowTimeSize', scaled(11, scale, 8))
+  SKIN:Bang('!SetVariable', 'HeaderSize', scaled(11, scale, 8))
+  SKIN:Bang('!SetVariable', 'CalendarSize', scaled(8, scale, 6))
+  SKIN:Bang('!SetVariable', 'CountdownNumberSize', scaled(18, scale, 10))
+  SKIN:Bang('!SetVariable', 'CountdownUnitSize', scaled(9, scale, 7))
   SKIN:Bang('!SetVariable', 'RowTitleW', preset.titleW)
   SKIN:Bang('!SetVariable', 'RowDetailW', preset.detailW)
   SKIN:Bang('!SetVariable', 'TimelineX', preset.timelineX)
@@ -449,6 +530,12 @@ local function apply_style()
   SKIN:Bang('!SetVariable', 'PanelSheen', preset.sheen)
   SKIN:Bang('!SetVariable', 'ActiveGlow1', preset.glow1)
   SKIN:Bang('!SetVariable', 'ActiveGlow2', preset.glow2)
+  SKIN:Bang('!SetVariable', 'ResizeHandleX', tostring(panelX + panelW - handleSize - 8))
+  SKIN:Bang('!SetVariable', 'ResizeHandleY', tostring(panelY + panelH - handleSize - 8))
+  SKIN:Bang('!SetVariable', 'ResizeHandleSize', tostring(handleSize))
+  SKIN:Bang('!SetVariable', 'ResizeHandleInset', tostring(math.max(4, round(5 * scale))))
+  SKIN:Bang('!SetVariable', 'ResizeHandleStep', tostring(math.max(5, round(6 * scale))))
+  SKIN:Bang('!SetVariable', 'ResizeScaleText', tostring(scalePercent) .. '%')
 end
 
 local function find_selected(now)
@@ -501,6 +588,33 @@ function CenterNow()
   scrollTarget = clamp(selected - 2, 0, max_scroll(maxRows))
   userScrolled = true
   homeAnimating = true
+  Update(true)
+  return ''
+end
+
+function PreviewScale(percent)
+  local minScale = read_number_variable('UiScaleMin', 70, 50, 100)
+  local maxScale = read_number_variable('UiScaleMax', 145, minScale, 200)
+  local nextScale = tonumber(percent or '') or 100
+  previewScale = clamp(nextScale, minScale, maxScale)
+  Update(true)
+  return ''
+end
+
+function NudgeScale(delta)
+  local minScale = read_number_variable('UiScaleMin', 70, 50, 100)
+  local maxScale = read_number_variable('UiScaleMax', 145, minScale, 200)
+  local step = tonumber(delta or '0') or 0
+  local base = previewScale or tonumber(SKIN:GetVariable('UiScale') or '') or 100
+  previewScale = clamp(base + step, minScale, maxScale)
+  SKIN:Bang('!WriteKeyValue', 'Variables', 'UiScale', tostring(previewScale), '#@#UserSettings.inc')
+  Update(true)
+  return ''
+end
+
+function ResetScale()
+  previewScale = 100
+  SKIN:Bang('!WriteKeyValue', 'Variables', 'UiScale', '100', '#@#UserSettings.inc')
   Update(true)
   return ''
 end

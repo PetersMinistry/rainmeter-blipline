@@ -1,5 +1,18 @@
 # Blipline Changelog
 
+## 0.3.2 Beta - 2026-05-11
+
+Icon polish beta update for clearer event badges.
+
+### Added
+
+- Crisp PNG event glyphs for meals, sunrise/morning events, Bible study, cross/church events, birthdays, flowers, ministry/swords, butterflies, candles, and fallback events.
+
+### Improved
+
+- Event badges now use a stronger Rainmeter shape background with a dedicated image glyph, making them easier to read at the native timeline size.
+- Emoji marker detection is preserved before title cleanup, so supported Google Calendar emoji markers can drive Blipline badges without leaving stray emoji in the displayed title.
+
 ## 0.3.1 Beta - 2026-05-10
 
 Feature beta update for timeline resizing.

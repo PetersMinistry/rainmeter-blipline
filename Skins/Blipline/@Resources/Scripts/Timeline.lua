@@ -15,8 +15,18 @@ local hiddenColor = '255,255,255,0'
 local mutedColor = '205,214,224,230'
 local activeColor = '255,199,50,255'
 local noShape = 'Rectangle 0,0,0,0 | Fill Color 0,0,0,0 | StrokeWidth 0'
-local iconFg = '250,253,255,242'
-local iconDim = '8,12,18,86'
+local blankIconImage = '#@#Images\\Icons\\blank.png'
+local iconImages = {
+  MEAL = 'meal.png',
+  SUN = 'sun.png',
+  BOOK = 'book.png',
+  ['+'] = 'cross.png',
+  BDAY = 'birthday.png',
+  LADY = 'flower.png',
+  IRON = 'iron.png',
+  BUTTERFLY = 'butterfly.png',
+  CANDLE = 'candle.png'
+}
 local daySeparatorGap = 20
 
 local function skin_var(name, fallback)
@@ -113,69 +123,17 @@ local function icon_shapes(icon, color)
     return noShape, noShape, noShape, noShape, noShape
   end
 
-  local base = 'Rectangle 0,0,18,18,5 | Fill Color ' .. color .. ' | StrokeWidth 1 | Stroke Color 255,255,255,58'
+  local baseFill = color_alpha(color, 188)
+  local baseStroke = color_alpha(color, 255)
+  local base = 'Rectangle 0,0,18,18,5 | Fill Color ' .. baseFill .. ' | StrokeWidth 1 | Stroke Color ' .. baseStroke
+  return base, noShape, noShape, noShape, noShape
+end
 
-  if icon == 'MEAL' then
-    return base,
-      'Rectangle 5,4,1.4,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Rectangle 8,4,1.4,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Rectangle 12,4,1.6,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Ellipse 4,3,3,3 | Fill Color ' .. iconFg .. ' | StrokeWidth 0'
-  end
-
-  if icon == 'SUN' then
-    return base,
-      'Ellipse 6,6,6,6 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Line 9,3,9,5 | StrokeWidth 1 | Stroke Color ' .. iconFg,
-      'Line 4,9,6,9 | StrokeWidth 1 | Stroke Color ' .. iconFg,
-      'Line 12,12,14,14 | StrokeWidth 1 | Stroke Color ' .. iconFg
-  end
-
-  if icon == 'BOOK' then
-    return base,
-      'Rectangle 4,5,5,8,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Rectangle 10,5,5,8,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Line 9,5,9,14 | StrokeWidth 1 | Stroke Color ' .. iconDim,
-      'Line 5,7,8,7 | StrokeWidth 1 | Stroke Color ' .. iconDim
-  end
-
-  if icon == '+' then
-    return base,
-      'Rectangle 8,4,2,10,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Rectangle 5,7,8,2,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      noShape,
-      noShape
-  end
-
-  if icon == 'BDAY' then
-    return base,
-      'Rectangle 4,10,10,4,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Rectangle 6,7,6,3,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Rectangle 8,4,2,3,1 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Ellipse 7,2,4,3 | Fill Color 255,224,90,236 | StrokeWidth 0'
-  end
-
-  if icon == 'LADY' then
-    return base,
-      'Ellipse 7,7,4,4 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Ellipse 4,5,5,5 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Ellipse 9,5,5,5 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Ellipse 7,10,5,5 | Fill Color ' .. iconFg .. ' | StrokeWidth 0'
-  end
-
-  if icon == 'IRON' then
-    return base,
-      'Line 4,14,14,4 | StrokeWidth 2 | Stroke Color ' .. iconFg,
-      'Line 4,4,14,14 | StrokeWidth 2 | Stroke Color ' .. iconFg,
-      'Ellipse 3,13,3,3 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-      'Ellipse 12,13,3,3 | Fill Color ' .. iconFg .. ' | StrokeWidth 0'
-  end
-
-  return base,
-    'Ellipse 7,7,4,4 | Fill Color ' .. iconFg .. ' | StrokeWidth 0',
-    noShape,
-    noShape,
-    noShape
+local function icon_image(icon)
+  if icon == '' then return blankIconImage end
+  local image = iconImages[icon]
+  if image == nil then image = 'fallback.png' end
+  return '#@#Images\\Icons\\' .. image
 end
 
 local function clear_separator(slot)
@@ -263,6 +221,7 @@ local function clear_row(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', '')
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', '')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconImage', blankIconImage)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconStroke', hiddenColor)
   for i = 1, 5 do
@@ -315,6 +274,7 @@ local function set_row(slot, event, active, headerDate, y)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Time', row_time_label(event, headerDate))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Title', event.title)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Icon', '')
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconImage', icon_image(event.icon))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconFill', event.icon ~= '' and event.color or hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconStroke', event.icon ~= '' and '255,255,255,48' or hiddenColor)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'IconShape1', shape1)

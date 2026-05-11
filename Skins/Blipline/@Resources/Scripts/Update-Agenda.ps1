@@ -155,6 +155,8 @@ function Get-EventIcon {
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F4D6))) { return 'BOOK' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F338))) { return 'LADY' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F382))) { return 'BDAY' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F98B))) { return 'BUTTERFLY' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F56F))) { return 'CANDLE' }
     if ($Text.Contains(([char]0x271D).ToString())) { return '+' }
     if ($Text.Contains(([char]0x2694).ToString())) { return 'IRON' }
     if ($Text -match '(?i)\bbible\b') { return 'BOOK' }
@@ -177,6 +179,8 @@ function Convert-TitleText {
     $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F4D6), '')
     $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F338), '')
     $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F382), '')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F98B), '')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F56F), '')
     $clean = $clean.Replace(([char]0x2615).ToString(), '')
     $clean = $clean.Replace(([char]0x271D).ToString(), '')
     $clean = $clean.Replace(([char]0x27A1).ToString(), '')
@@ -306,7 +310,7 @@ function New-ShiftedEvent {
     )
 
     $duration = $Event.End - $Event.Start
-    New-EventObject -Start $Start -End $Start.Add($duration) -Title $Event.Title -Location $Event.Location -Notes $Event.Notes -AllDay:$Event.AllDay -Color $Event.Color -Calendar $Event.Calendar
+    New-EventObject -Start $Start -End $Start.Add($duration) -Title $Event.Title -Location $Event.Location -Notes $Event.Notes -AllDay:$Event.AllDay -Color $Event.Color -Calendar $Event.Calendar -Icon $Event.Icon
 }
 
 function Expand-IcsEvent {
@@ -407,7 +411,8 @@ function New-EventObject {
         [string]$Notes,
         [bool]$AllDay,
         [string]$Color,
-        [string]$Calendar
+        [string]$Calendar,
+        [string]$Icon = ''
     )
 
     [pscustomobject]@{
@@ -419,6 +424,7 @@ function New-EventObject {
         AllDay = $AllDay
         Color = $Color
         Calendar = $Calendar
+        Icon = $Icon
     }
 }
 
@@ -547,7 +553,9 @@ function Parse-IcsEvents {
         if (!$end) {
             $end = if ($allDay) { $start.AddDays(1) } else { $start.AddMinutes(30) }
         }
-        $title = Convert-IcsText $current['SUMMARY']
+        $rawTitle = $current['SUMMARY']
+        $icon = Get-EventIcon $rawTitle
+        $title = Convert-IcsText $rawTitle
         if (!$title) { $title = 'Calendar event' }
 
         $hasRecurrenceId = $current.ContainsKey('RECURRENCE-ID') -and ![string]::IsNullOrWhiteSpace($current['RECURRENCE-ID'])
@@ -557,7 +565,7 @@ function Parse-IcsEvents {
 
         $location = Convert-IcsText $current['LOCATION']
         $notes = Convert-IcsText $current['DESCRIPTION']
-        $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -Notes $notes -AllDay:$allDay -Color $Color -Calendar $CalendarName
+        $baseEvent = New-EventObject -Start $start -End $end -Title $title -Location $location -Notes $notes -AllDay:$allDay -Color $Color -Calendar $CalendarName -Icon $icon
 
         if ($hasRecurrenceId) {
             if ($baseEvent.End -ge $WindowStart -and $baseEvent.Start -lt $WindowEnd) {
@@ -827,7 +835,7 @@ function Write-AgendaCache {
         $time = if ($event.AllDay) { 'All day' } else { $event.Start.ToString('h:mm tt') }
         $endTime = if ($event.AllDay) { '' } else { $event.End.ToString('h:mm tt') }
         $dateLabel = $event.Start.ToString('ddd  dd MMM').ToUpperInvariant()
-        $icon = Get-EventIcon $event.Title
+        $icon = if ($event.Icon) { $event.Icon } else { Get-EventIcon $event.Title }
         $title = Convert-TitleText $event.Title
         $location = Convert-DisplayText $event.Location
         $notes = Convert-DisplayText $event.Notes

@@ -672,13 +672,7 @@ function Get-CalendarContent {
     catch {
         try {
             Add-Type -AssemblyName System.Net.Http
-            $handler = New-Object System.Net.Http.HttpClientHandler
-            try {
-                $handler.ServerCertificateCustomValidationCallback = { $true }
-            }
-            catch {
-            }
-            $client = New-Object System.Net.Http.HttpClient($handler)
+            $client = New-Object System.Net.Http.HttpClient
             $client.Timeout = [TimeSpan]::FromSeconds(25)
             $client.DefaultRequestHeaders.UserAgent.ParseAdd('Blipline/0.3')
             return $client.GetStringAsync($Source).GetAwaiter().GetResult()
@@ -692,7 +686,6 @@ function Get-CalendarContent {
             $tempScript = Join-Path $env:TEMP ('BliplineFetch-' + [guid]::NewGuid().ToString('N') + '.py')
             $tempFile = Join-Path $env:TEMP ('BliplineFeed-' + [guid]::NewGuid().ToString('N') + '.ics')
             Set-Content -LiteralPath $tempScript -Encoding UTF8 -Value @'
-import ssl
 import sys
 import urllib.request
 
@@ -705,8 +698,7 @@ request = urllib.request.Request(
         "Accept": "text/calendar,text/plain,*/*",
     },
 )
-context = ssl._create_unverified_context()
-with urllib.request.urlopen(request, timeout=25, context=context) as response:
+with urllib.request.urlopen(request, timeout=25) as response:
     data = response.read()
 with open(out_file, "wb") as handle:
     handle.write(data)

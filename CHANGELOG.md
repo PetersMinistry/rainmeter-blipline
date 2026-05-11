@@ -1,5 +1,19 @@
 # Blipline Changelog
 
+## 0.3.3 Beta - 2026-05-11
+
+Security and privacy patch for calendar feed fetching and release hygiene.
+
+### Security
+
+- Removed TLS certificate-verification bypasses from private iCal fetch fallbacks.
+- Python helper fetches now use default verified TLS instead of an unverified SSL context.
+
+### Improved
+
+- Release privacy validation now catches insecure TLS bypass patterns and private-looking screenshot artifacts in the local release-adjacent `dist` folder.
+- Removed private contact-sheet screenshot artifacts from local release-adjacent build output.
+
 ## 0.3.2 Beta - 2026-05-11
 
 Icon polish beta update for clearer event badges.

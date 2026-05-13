@@ -1,5 +1,14 @@
 # Blipline Changelog
 
+## 0.3.4 Beta - 2026-05-12
+
+Reliability update for calendar refresh timing.
+
+### Fixed
+
+- Timeline auto-refresh now explicitly runs the calendar fetch on the configured interval.
+- Default refresh cadence is now 5 minutes instead of 15 minutes.
+
 ## 0.3.3 Beta - 2026-05-11
 
 Security and privacy patch for calendar feed fetching and release hygiene.

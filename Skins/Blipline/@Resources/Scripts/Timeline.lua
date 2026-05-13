@@ -6,6 +6,7 @@ local scrollTarget = 0
 local userScrolled = false
 local homeAnimating = false
 local lastRenderSecond = -1
+local lastAutoFetch = 0
 local previewScale = nil
 local currentScale = 1
 
@@ -513,15 +514,35 @@ local function find_selected(now)
   return #events, 'DONE', 0
 end
 
+local function refresh_interval_seconds()
+  local seconds = tonumber(skin_var('RefreshSeconds', '900')) or 900
+  if seconds < 1 then return 900 end
+  return seconds
+end
+
+local function maybe_auto_fetch(now)
+  if lastAutoFetch == 0 then
+    lastAutoFetch = now
+    return
+  end
+
+  if now - lastAutoFetch >= refresh_interval_seconds() then
+    lastAutoFetch = now
+    SKIN:Bang('!CommandMeasure', 'MeasureFetchAgenda', 'Run')
+  end
+end
+
 function Initialize()
   cachePath = SKIN:MakePathAbsolute(SELF:GetOption('CachePath'))
   read_cache()
   lastRead = os.time()
+  lastAutoFetch = lastRead
 end
 
 function ReadAgenda()
   read_cache()
   lastRead = os.time()
+  lastAutoFetch = lastRead
   userScrolled = false
   Update(true)
 end
@@ -585,6 +606,9 @@ function Update(force)
     return ''
   end
   lastRenderSecond = now
+  if not force then
+    maybe_auto_fetch(now)
+  end
 
   local maxRows = read_number_variable('MaxRows', 6, 1, 6)
   apply_style()

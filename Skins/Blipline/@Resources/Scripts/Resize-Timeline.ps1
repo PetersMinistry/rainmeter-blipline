@@ -3,7 +3,8 @@ param(
   [string]$Config = 'Blipline\Timeline',
   [string]$Measure = 'MeasureTimeline',
   [string]$Min = '70',
-  [string]$Max = '145'
+  [string]$Max = '145',
+  [string]$RainmeterPath = ''
 )
 
 $ErrorActionPreference = 'SilentlyContinue'
@@ -67,9 +68,37 @@ function Save-SettingScale {
   [System.IO.File]::WriteAllLines($Path, [string[]]$lines, [System.Text.Encoding]::ASCII)
 }
 
+function Save-ResizeStatus {
+  param([string]$Path, [string]$Status)
+  if (-not (Test-Path -LiteralPath $Path)) { return }
+  $lines = [System.Collections.Generic.List[string]](Get-Content -LiteralPath $Path)
+  $found = $false
+  for ($i = 0; $i -lt $lines.Count; $i++) {
+    if ($lines[$i] -match '^ResizeStatus=') {
+      $lines[$i] = "ResizeStatus=$Status"
+      $found = $true
+      break
+    }
+  }
+  if (-not $found) {
+    $insertAt = 0
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+      if ($lines[$i] -match '^UiScaleMax=') {
+        $insertAt = $i + 1
+        break
+      }
+    }
+    $lines.Insert($insertAt, "ResizeStatus=$Status")
+  }
+  [System.IO.File]::WriteAllLines($Path, [string[]]$lines, [System.Text.Encoding]::ASCII)
+}
+
 function Send-Scale {
   param([int]$Scale)
-  $rainmeter = Join-Path $env:ProgramFiles 'Rainmeter\Rainmeter.exe'
+  $rainmeter = $RainmeterPath
+  if ([string]::IsNullOrWhiteSpace($rainmeter)) {
+    $rainmeter = Join-Path $env:ProgramFiles 'Rainmeter\Rainmeter.exe'
+  }
   if (-not (Test-Path -LiteralPath $rainmeter)) { return }
   & $rainmeter '!CommandMeasure' $Measure "PreviewScale($Scale)" $Config | Out-Null
 }
@@ -82,6 +111,7 @@ if ($maxScale -lt $minScale) { $maxScale = $minScale }
 
 $SettingsPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($SettingsPath)
 $startScale = Clamp-Int -Value (Read-SettingScale -Path $SettingsPath) -Low $minScale -High $maxScale
+Save-ResizeStatus -Path $SettingsPath -Status 'Resize started'
 
 $startPoint = New-Object BliplineMouse+POINT
 [BliplineMouse]::GetCursorPos([ref]$startPoint) | Out-Null
@@ -107,4 +137,5 @@ while (([BliplineMouse]::GetAsyncKeyState(0x01) -band 0x8000) -ne 0) {
 }
 
 Save-SettingScale -Path $SettingsPath -Scale $lastScale
+Save-ResizeStatus -Path $SettingsPath -Status "Resize saved at $lastScale%"
 Send-Scale -Scale $lastScale

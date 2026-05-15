@@ -147,8 +147,9 @@ local function clear_separator(slot)
 end
 
 local function set_separator(slot, event, y)
+  local dividerY = math.floor(y - math.max(12, round(14 * currentScale)) + 0.5)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerText', event.date)
-  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(math.floor(y - 22 + 0.5)))
+  SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(dividerY))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerLine', skin_var('DividerLineColor', '255,255,255,34'))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerAccent', color_alpha(event.color, 176))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerFill', skin_var('DividerFillColor', '8,12,18,178'))
@@ -406,7 +407,7 @@ local function apply_style()
   end
   preset.baseY = scaledBaseY
   preset.gap = math.max(28, round((tonumber(preset.gap) or 48) * scale))
-  daySeparatorGap = math.max(14, round(20 * scale))
+  daySeparatorGap = math.max(20, round(24 * scale))
 
   rowBaseY = preset.baseY
   rowGap = preset.gap
@@ -425,7 +426,7 @@ local function apply_style()
   local panelY = tonumber(preset.panelY) or 22
   local panelW = tonumber(preset.panelW) or 526
   local panelH = tonumber(preset.panelH) or 446
-  local handleSize = math.max(16, round(18 * scale))
+  local handleSize = math.max(24, round(28 * scale))
 
   SKIN:Bang('!SetVariable', 'UiScale', tostring(scalePercent))
   SKIN:Bang('!SetVariable', 'RowTitleSize', preset.title)
@@ -494,8 +495,8 @@ local function apply_style()
   SKIN:Bang('!SetVariable', 'ResizeHandleX', tostring(panelX + panelW - handleSize - 8))
   SKIN:Bang('!SetVariable', 'ResizeHandleY', tostring(panelY + panelH - handleSize - 8))
   SKIN:Bang('!SetVariable', 'ResizeHandleSize', tostring(handleSize))
-  SKIN:Bang('!SetVariable', 'ResizeHandleInset', tostring(math.max(4, round(5 * scale))))
-  SKIN:Bang('!SetVariable', 'ResizeHandleStep', tostring(math.max(5, round(6 * scale))))
+  SKIN:Bang('!SetVariable', 'ResizeHandleInset', tostring(math.max(6, round(8 * scale))))
+  SKIN:Bang('!SetVariable', 'ResizeHandleStep', tostring(math.max(6, round(7 * scale))))
   SKIN:Bang('!SetVariable', 'ResizeScaleText', tostring(scalePercent) .. '%')
 end
 

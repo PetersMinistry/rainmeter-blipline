@@ -1,5 +1,18 @@
 # Blipline Changelog
 
+## 0.3.5 Beta - 2026-05-14
+
+Layout polish update for timeline separators and resize behavior.
+
+### Fixed
+
+- Date separator chips now keep clear of the previous event's detail line when the visible list crosses into a new day.
+- Resize helper launch now uses Rainmeter's own program path, improving reliability across machines and install locations.
+
+### Improved
+
+- Resize handle is easier to target, with scroll/right-click sizing actions routed through the timeline script and a local resize status message saved after use.
+
 ## 0.3.4 Beta - 2026-05-12
 
 Reliability update for calendar refresh timing.

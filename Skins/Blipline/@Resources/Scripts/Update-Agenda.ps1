@@ -303,6 +303,32 @@ function Test-IcsDayMatch {
     return $false
 }
 
+function Get-IcsWeekStartDate {
+    param(
+        [datetime]$Date,
+        [string]$WeekStart
+    )
+
+    $dayMap = @{
+        SU = [DayOfWeek]::Sunday
+        MO = [DayOfWeek]::Monday
+        TU = [DayOfWeek]::Tuesday
+        WE = [DayOfWeek]::Wednesday
+        TH = [DayOfWeek]::Thursday
+        FR = [DayOfWeek]::Friday
+        SA = [DayOfWeek]::Saturday
+    }
+
+    $startDay = [DayOfWeek]::Monday
+    $clean = if ($WeekStart) { $WeekStart.ToUpperInvariant() } else { '' }
+    if ($dayMap.ContainsKey($clean)) {
+        $startDay = $dayMap[$clean]
+    }
+
+    $offset = ([int]$Date.DayOfWeek - [int]$startDay + 7) % 7
+    return $Date.Date.AddDays(-$offset)
+}
+
 function New-ShiftedEvent {
     param(
         [object]$Event,
@@ -343,6 +369,8 @@ function Expand-IcsEvent {
     $countLimit = if ($rule.ContainsKey('COUNT')) { [int]$rule['COUNT'] } else { 0 }
     $until = if ($rule.ContainsKey('UNTIL')) { Convert-IcsDate $rule['UNTIL'] } else { $null }
     $byDay = if ($rule.ContainsKey('BYDAY')) { $rule['BYDAY'] } else { '' }
+    $weekStart = if ($rule.ContainsKey('WKST')) { $rule['WKST'] } else { 'MO' }
+    $baseWeekStart = Get-IcsWeekStartDate -Date $Event.Start -WeekStart $weekStart
     $exKeys = @{}
     foreach ($exDate in @($ExDates)) {
         if ($exDate) {
@@ -364,6 +392,13 @@ function Expand-IcsEvent {
 
         if ($freq -eq 'WEEKLY' -and -not (Test-IcsDayMatch -Date $candidate -ByDay $byDay)) {
             $include = $false
+        }
+        elseif ($freq -eq 'WEEKLY' -and ![string]::IsNullOrWhiteSpace($byDay)) {
+            $candidateWeekStart = Get-IcsWeekStartDate -Date $candidate -WeekStart $weekStart
+            $weekOffset = [int][Math]::Floor((New-TimeSpan -Start $baseWeekStart -End $candidateWeekStart).TotalDays / 7)
+            if ($weekOffset -lt 0 -or ($weekOffset % $interval) -ne 0) {
+                $include = $false
+            }
         }
 
         if ($include) {

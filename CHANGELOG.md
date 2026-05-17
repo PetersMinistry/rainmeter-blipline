@@ -1,5 +1,13 @@
 # Blipline Changelog
 
+## 0.3.6 Beta - 2026-05-17
+
+Recurrence accuracy patch for alternating weekly events.
+
+### Fixed
+
+- Biweekly calendar events that use `INTERVAL=2` with `BYDAY` now stay on their correct week instead of appearing every week.
+
 ## 0.3.5 Beta - 2026-05-14
 
 Layout polish update for timeline separators and resize behavior.

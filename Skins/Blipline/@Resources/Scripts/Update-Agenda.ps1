@@ -950,20 +950,15 @@ try {
             $successCount++
         }
         catch {
-            $errText = $_.Exception.Message
-            if ([string]::IsNullOrWhiteSpace($errText)) { $errText = $_.ToString() }
-            $errText = ($errText.Trim() -replace '[\r\n=]', ' ')
-            if ($errText.Length -gt 28) { $errText = $errText.Substring(0, 25) + '...' }
             $feedStatuses.Add([pscustomobject]@{
                 Index = $feed.Index
                 Name = if (![string]::IsNullOrWhiteSpace($feed.Name)) { $feed.Name } else { $feed.FallbackName }
-                Result = "Failed: $errText"
+                Result = 'Failed'
                 Count = 0
                 Color = $feed.Color
             })
             $failureCount++
         }
-
     }
 
     if ($successCount -eq 0) {

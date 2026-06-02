@@ -9,6 +9,10 @@ local lastRenderSecond = -1
 local lastAutoFetch = 0
 local previewScale = nil
 local currentScale = 1
+local lastStyleSignature = nil
+local lastRenderedStartIndex = nil
+local lastRenderedSelected = nil
+local lastRenderedMaxRows = nil
 
 local rowBaseY = {94, 134, 174, 214, 254, 294}
 local rowGap = 40
@@ -146,8 +150,13 @@ local function clear_separator(slot)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerTextColor', hiddenColor)
 end
 
-local function set_separator(slot, event, y)
+local function set_separator(slot, event, y, positionOnly)
   local dividerY = math.floor(y - math.max(12, round(14 * currentScale)) + 0.5)
+  if positionOnly then
+    SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(dividerY))
+    return
+  end
+
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerText', event.date)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerY', tostring(dividerY))
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DividerLine', skin_var('DividerLineColor', '255,255,255,34'))
@@ -291,9 +300,15 @@ local function set_row(slot, event, active, headerDate, y)
   SKIN:Bang('!SetVariable', 'Row' .. slot .. 'DotSize', scaled(active and 12 or 8, currentScale, 4))
 end
 
-local function apply_style()
+local function apply_style(force)
   local style = SKIN:GetVariable('TimelineStyle') or 'Glass'
   local template = SKIN:GetVariable('LayoutTemplate') or 'Classic'
+  local scale, scalePercent = read_scale()
+  local styleSignature = table.concat({ style, template, tostring(scalePercent) }, '|')
+  if not force and styleSignature == lastStyleSignature then
+    return
+  end
+  lastStyleSignature = styleSignature
 
   local presets = {
     Classic = {
@@ -384,7 +399,6 @@ local function apply_style()
     end
   end
 
-  local scale, scalePercent = read_scale()
   currentScale = scale
   local anchorX = tonumber(classic.panelX) or 92
   local anchorY = tonumber(classic.panelY) or 22
@@ -555,6 +569,7 @@ function ReadAgenda()
   lastRead = os.time()
   lastAutoFetch = lastRead
   userScrolled = false
+  lastRenderedStartIndex = nil
   Update(true)
 end
 
@@ -578,6 +593,16 @@ function CenterNow()
   if selected == 0 then return '' end
 
   scrollTarget = clamp(selected - 2, 0, max_scroll(maxRows))
+  local delta = scrollTarget - scrollCurrent
+  local recenterWindow = 2.5
+  if math.abs(delta) > recenterWindow then
+    if delta > 0 then
+      scrollCurrent = scrollTarget - recenterWindow
+    else
+      scrollCurrent = scrollTarget + recenterWindow
+    end
+  end
+
   userScrolled = true
   homeAnimating = true
   Update(true)
@@ -589,6 +614,7 @@ function PreviewScale(percent)
   local maxScale = read_number_variable('UiScaleMax', 145, minScale, 200)
   local nextScale = tonumber(percent or '') or 100
   previewScale = clamp(nextScale, minScale, maxScale)
+  lastRenderedStartIndex = nil
   Update(true)
   return ''
 end
@@ -600,6 +626,7 @@ function NudgeScale(delta)
   local base = previewScale or tonumber(SKIN:GetVariable('UiScale') or '') or 100
   previewScale = clamp(base + step, minScale, maxScale)
   SKIN:Bang('!WriteKeyValue', 'Variables', 'UiScale', tostring(previewScale), '#@#UserSettings.inc')
+  lastRenderedStartIndex = nil
   Update(true)
   return ''
 end
@@ -607,6 +634,7 @@ end
 function ResetScale()
   previewScale = 100
   SKIN:Bang('!WriteKeyValue', 'Variables', 'UiScale', '100', '#@#UserSettings.inc')
+  lastRenderedStartIndex = nil
   Update(true)
   return ''
 end
@@ -622,7 +650,7 @@ function Update(force)
   end
 
   local maxRows = read_number_variable('MaxRows', 6, 1, 6)
-  apply_style()
+  apply_style(force)
   if now - lastRead > 30 then
     read_cache()
     lastRead = now
@@ -658,7 +686,7 @@ function Update(force)
         homeAnimating = false
         userScrolled = false
       else
-        scrollCurrent = scrollCurrent + (delta * 0.22)
+        scrollCurrent = scrollCurrent + (delta * 0.5)
       end
     end
 
@@ -666,6 +694,7 @@ function Update(force)
     local fractional = scrollCurrent - math.floor(scrollCurrent)
     local activeSlot = selected - startIndex + 1
     local selectedVisible = activeSlot >= 1 and activeSlot <= maxRows
+    local rowContentDirty = force or startIndex ~= lastRenderedStartIndex or selected ~= lastRenderedSelected or maxRows ~= lastRenderedMaxRows
     local rowY = {}
     local showSeparator = {}
     local separatorCount = 0
@@ -692,15 +721,23 @@ function Update(force)
       local event = events[startIndex + slot - 1]
       if event and slot <= maxRows then
         if showSeparator[slot] then
-          set_separator(slot, event, rowY[slot])
-        else
+          set_separator(slot, event, rowY[slot], not rowContentDirty)
+        elseif rowContentDirty then
           clear_separator(slot)
         end
-        set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate, rowY[slot])
-      else
+        if rowContentDirty then
+          set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate, rowY[slot])
+        else
+          SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Y', tostring(math.floor(rowY[slot] + 0.5)))
+        end
+      elseif rowContentDirty then
         clear_row(slot)
       end
     end
+
+    lastRenderedStartIndex = startIndex
+    lastRenderedSelected = selected
+    lastRenderedMaxRows = maxRows
   end
 
   SKIN:Bang('!UpdateMeter', '*')

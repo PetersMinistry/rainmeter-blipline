@@ -5,12 +5,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-# Ensure modern TLS protocols are enabled and bypass certificate validation errors (fixes SSL/TLS issues on older/custom Windows environments)
+# Ensure modern TLS protocols are enabled for network requests (fixes connection issues on older Windows machines)
 try {
-    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072 -bor 12288
-    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072
 } catch {}
-
 
 
 function Get-SettingValue {

@@ -783,7 +783,7 @@ function Write-AgendaCache {
     $today = $now.Date
     $maxRows = [int](Get-SettingValue -Path $SettingsPath -Name 'MaxRows' -Default '6')
     $minRows = [Math]::Max(1, $maxRows)
-    $cacheLimit = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheLimit' -Default '60')
+    $cacheLimit = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheLimit' -Default '120')
     $cacheLimit = [Math]::Max($minRows, $cacheLimit)
     $pastDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CachePastDays' -Default '14')
     $futureDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheFutureDays' -Default '90')

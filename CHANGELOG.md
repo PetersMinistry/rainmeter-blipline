@@ -1,4 +1,13 @@
-# Blipline Changelog
+﻿# Blipline Changelog
+
+## 0.3.7 Beta - 2026-06-01
+
+Layout update introducing the transparent Phantom template.
+
+### Added
+- Added the transparent **"Phantom"** layout template with a completely transparent panel background, faint white glass border framing, translucent separator lines, and high-visibility typography.
+- Integrated the new **Phantom** layout button on Row 3 inside the setup panel (`Settings.ini`).
+- Resized the setup panel to `800px` height to cleanly support the expanded 7th layout button option.
 
 ## 0.3.6 Beta - 2026-05-17
 
@@ -116,3 +125,4 @@ First local Rainmeter prototype.
 - Sample-data fallback when no calendar feed is set.
 - PowerShell iCal/ICS fetch and parser script.
 - Lua timeline updater for countdown and active-row shifting.
+

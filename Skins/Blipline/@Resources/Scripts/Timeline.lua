@@ -594,7 +594,7 @@ function CenterNow()
 
   scrollTarget = clamp(selected - 2, 0, max_scroll(maxRows))
   local delta = scrollTarget - scrollCurrent
-  local recenterWindow = 2.5
+  local recenterWindow = 2.0
   if math.abs(delta) > recenterWindow then
     if delta > 0 then
       scrollCurrent = scrollTarget - recenterWindow
@@ -686,7 +686,7 @@ function Update(force)
         homeAnimating = false
         userScrolled = false
       else
-        scrollCurrent = scrollCurrent + (delta * 0.5)
+        scrollCurrent = scrollCurrent + (delta * 0.25)
       end
     end
 

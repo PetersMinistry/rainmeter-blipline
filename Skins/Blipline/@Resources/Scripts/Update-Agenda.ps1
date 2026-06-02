@@ -5,6 +5,12 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+# Ensure modern TLS protocols are enabled for network requests (fixes connection issues on older Windows machines)
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072
+} catch {}
+
+
 function Get-SettingValue {
     param(
         [string]$Path,

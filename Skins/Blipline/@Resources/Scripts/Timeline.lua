@@ -355,6 +355,16 @@ local function apply_style()
       activeText = '178,114,0,255', activeSub = '98,78,40,238', accent = '223,150,28,255', accentSoft = '223,150,28,104',
       dividerLine = '54,68,90,30', dividerFill = '255,255,255,232', dividerText = '58,68,84,232', tag = '255,255,255,246', tagSub = '98,78,40,238',
       sheen = '255,255,255,0', tagGlow = '223,150,28,34', glow1 = '223,150,28,34', glow2 = '223,150,28,78'
+    },
+    Phantom = {
+      title = '12', sub = '8', titleW = '306', detailW = '318', timelineX = '232', timeX = '210', iconX = '258', titleX = '286', baseY = {98, 146, 194, 242, 290, 338}, gap = 48,
+      panelX = '92', panelY = '22', panelW = '526', panelH = '446', panelRadius = '14', headerX = '356', headerY = '42', calX = '586', calY = '42', sourceX = '356', sourceY = '430', sourceW = '410',
+      lineY = '92', lineH = '344', scrollX = '92', scrollY = '72', scrollW = '526', scrollH = '376', countdownX = '2', countdownTextX = '36', connectorX = '92', connectorW = '132',
+      divLeftX = '286', divLeftW = '32', divRightX = '398', divRightW = '154', divChipX = '321', divDotX = '230', divTextX = '356',
+      panel = '0,0,0,0', edge = '255,255,255,16', line = '255,255,255,44', text = '255,255,255,246', subc = '170,178,190,226',
+      activeText = '255,199,50,255', activeSub = '230,214,156,238', accent = '255,199,50,255', accentSoft = '255,199,50,112',
+      dividerLine = '255,255,255,24', dividerFill = '0,0,0,0', dividerText = '202,211,224,218', tag = '12,16,22,120', tagSub = '224,214,162,238',
+      sheen = '255,255,255,0', tagGlow = '255,199,50,34', glow1 = '255,199,50,34', glow2 = '255,199,50,78'
     }
   }
 

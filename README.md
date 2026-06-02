@@ -1,4 +1,4 @@
-﻿# Blipline
+# Blipline
 
 Blipline is a Rainmeter agenda timeline for Google Calendar-style private iCal feeds. It turns your upcoming schedule into a clean desktop timeline so you can see what is coming up without constantly opening your calendar.
 
@@ -8,7 +8,7 @@ It includes current/next event focus, a side countdown, smooth scrolling, multi-
 
 ## Download
 
-Current beta: `v0.3.7-beta.1`
+Current beta: `v0.3.8-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 

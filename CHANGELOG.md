@@ -1,4 +1,14 @@
-﻿# Blipline Changelog
+# Blipline Changelog
+
+## 0.3.8 Beta - 2026-06-02
+
+Performance update introducing 60fps smooth scroll and encoding fixes.
+
+### Improved
+- Fixed UTF-8 BOM encoding bug in `Timeline.ini` to restore Rainmeter's ability to parse the `[Rainmeter]` section and activate the fast `Update=50` (50ms refresh cycle).
+- Added recenter window optimization of `6.0` rows (one full viewport height) to instantly teleport within scrolling distance when resetting, enabling a gorgeous, sweeping visual glide back home.
+- Restored smooth asymptotic ease-out curve (`delta * 0.15`) with a tight `0.15` rows snap threshold for an elegant 1.1s glide.
+- Removed redundant overlapping mouse click actions on the countdown text/unit meters to prevent triple-execution on single clicks.
 
 ## 0.3.7 Beta - 2026-06-01
 

@@ -594,7 +594,7 @@ function CenterNow()
 
   scrollTarget = clamp(selected - 2, 0, max_scroll(maxRows))
   local delta = scrollTarget - scrollCurrent
-  local recenterWindow = 2.0
+  local recenterWindow = 6.0
   if math.abs(delta) > recenterWindow then
     if delta > 0 then
       scrollCurrent = scrollTarget - recenterWindow
@@ -682,13 +682,13 @@ function Update(force)
     if homeAnimating then
       local delta = scrollTarget - scrollCurrent
       SKIN:Bang('!Log', 'Blipline Animation Tick: scrollCurrent=' .. tostring(scrollCurrent) .. ' target=' .. tostring(scrollTarget) .. ' delta=' .. tostring(delta), 'Debug')
-      if math.abs(delta) < 0.05 then
+      if math.abs(delta) < 0.15 then
         scrollCurrent = scrollTarget
         homeAnimating = false
         userScrolled = false
         SKIN:Bang('!Log', 'Blipline Animation Finished: scrollCurrent=' .. tostring(scrollCurrent), 'Debug')
       else
-        scrollCurrent = scrollCurrent + (delta * 0.20)
+        scrollCurrent = scrollCurrent + (delta * 0.15)
       end
     end
 

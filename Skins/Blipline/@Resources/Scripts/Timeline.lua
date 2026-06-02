@@ -682,13 +682,13 @@ function Update(force)
     if homeAnimating then
       local delta = scrollTarget - scrollCurrent
       SKIN:Bang('!Log', 'Blipline Animation Tick: scrollCurrent=' .. tostring(scrollCurrent) .. ' target=' .. tostring(scrollTarget) .. ' delta=' .. tostring(delta), 'Debug')
-      if math.abs(delta) < 0.15 then
+      if math.abs(delta) < 0.05 then
         scrollCurrent = scrollTarget
         homeAnimating = false
         userScrolled = false
         SKIN:Bang('!Log', 'Blipline Animation Finished: scrollCurrent=' .. tostring(scrollCurrent), 'Debug')
       else
-        scrollCurrent = scrollCurrent + (delta * 0.35)
+        scrollCurrent = scrollCurrent + (delta * 0.20)
       end
     end
 

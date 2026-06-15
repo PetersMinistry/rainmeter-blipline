@@ -353,13 +353,19 @@ function Get-MonthlyByDayDate {
             return $null
         }
         return $result
-    }
     elseif ($ordinal -lt 0) {
+        # Nth-from-last occurrence (e.g., -1MO = last Monday, -2MO = 2nd-to-last)
         $lastOfMonth = Get-Date -Year $Year -Month $Month -Day $daysInMonth
         $offset = ([int]$lastOfMonth.DayOfWeek - [int]$targetDay + 7) % 7
-        return $lastOfMonth.AddDays(-$offset)
+        $lastOccurrence = $lastOfMonth.AddDays(-$offset)
+        $result = $lastOccurrence.AddDays(7 * ($ordinal + 1))
+        if ($result.Month -ne $Month) {
+            return $null  # Ordinal exceeds available occurrences this month
+        }
+        return $result
     }
     else {
+        # No ordinal prefix — not meaningful for MONTHLY; fall back
         return $null
     }
 }
@@ -483,14 +489,20 @@ function Expand-IcsEvent {
             }
         }
         elseif ($freq -eq 'MONTHLY') {
-            $candidate = $candidate.AddMonths($interval)
-            if (![string]::IsNullOrWhiteSpace($byDay)) {
-                $adjusted = Get-MonthlyByDayDate -Year $candidate.Year -Month $candidate.Month -ByDay $byDay
-                if ($adjusted) {
-                    $candidate = Get-Date -Year $adjusted.Year -Month $adjusted.Month -Day $adjusted.Day `
-                        -Hour $candidate.Hour -Minute $candidate.Minute -Second $candidate.Second
+            do {
+                $candidate = $candidate.AddMonths($interval)
+                $byDayValid = $true
+                if (![string]::IsNullOrWhiteSpace($byDay)) {
+                    $adjusted = Get-MonthlyByDayDate -Year $candidate.Year -Month $candidate.Month -ByDay $byDay
+                    if ($adjusted) {
+                        $candidate = Get-Date -Year $adjusted.Year -Month $adjusted.Month -Day $adjusted.Day `
+                            -Hour $candidate.Hour -Minute $candidate.Minute -Second $candidate.Second
+                    }
+                    else {
+                        $byDayValid = $false
+                    }
                 }
-            }
+            } while (!$byDayValid -and $guard -lt 1000)
         }
         elseif ($freq -eq 'YEARLY') {
             $candidate = $candidate.AddYears($interval)

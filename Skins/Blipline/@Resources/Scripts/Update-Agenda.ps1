@@ -1009,7 +1009,7 @@ try {
             }
 
             $detectedColor = Get-IcsCalendarColor -Content $content
-            $calendarColor = if (![string]::IsNullOrWhiteSpace($detectedColor)) { $detectedColor } else { $feed.Color }
+            $calendarColor = if (![string]::IsNullOrWhiteSpace($feed.Color) -and $feed.Color -ne '255,255,255,0') { $feed.Color } elseif (![string]::IsNullOrWhiteSpace($detectedColor)) { $detectedColor } else { $feed.Color }
             $events = Parse-IcsEvents -Content $content -CalendarName $calendarName -Color $calendarColor -WindowStart $parseWindowStart -WindowEnd $parseWindowEnd
             foreach ($event in $events) { $allEvents.Add($event) }
             $feedStatuses.Add([pscustomobject]@{

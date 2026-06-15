@@ -89,5 +89,5 @@ Use the lower-right corner of the timeline to resize it. Scroll on the corner fo
 
 ## Status
 
-`0.3.6` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`v0.3.9-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
 

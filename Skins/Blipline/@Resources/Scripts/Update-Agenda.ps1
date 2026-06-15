@@ -309,6 +309,61 @@ function Test-IcsDayMatch {
     return $false
 }
 
+function Get-MonthlyByDayDate {
+    param(
+        [int]$Year,
+        [int]$Month,
+        [string]$ByDay
+    )
+
+    if ([string]::IsNullOrWhiteSpace($ByDay)) {
+        return $null
+    }
+
+    $dayMap = @{
+        SU = [DayOfWeek]::Sunday
+        MO = [DayOfWeek]::Monday
+        TU = [DayOfWeek]::Tuesday
+        WE = [DayOfWeek]::Wednesday
+        TH = [DayOfWeek]::Thursday
+        FR = [DayOfWeek]::Friday
+        SA = [DayOfWeek]::Saturday
+    }
+
+    # Parse BYDAY ordinal and day code: "3SA" → ordinal=3, dayCode=SA
+    $ordinal = 0
+    $dayCode = $ByDay.Trim().ToUpperInvariant()
+    if ($dayCode -match '^([+-]?\d+)([A-Z]{2})$') {
+        $ordinal = [int]$matches[1]
+        $dayCode = $matches[2]
+    }
+
+    if (!$dayMap.ContainsKey($dayCode)) {
+        return $null
+    }
+
+    $targetDay = $dayMap[$dayCode]
+    $daysInMonth = [DateTime]::DaysInMonth($Year, $Month)
+    $firstOfMonth = Get-Date -Year $Year -Month $Month -Day 1
+
+    if ($ordinal -gt 0) {
+        $firstOccurrence = $firstOfMonth.AddDays(([int]$targetDay - [int]$firstOfMonth.DayOfWeek + 7) % 7)
+        $result = $firstOccurrence.AddDays(7 * ($ordinal - 1))
+        if ($result.Month -ne $Month) {
+            return $null
+        }
+        return $result
+    }
+    elseif ($ordinal -lt 0) {
+        $lastOfMonth = Get-Date -Year $Year -Month $Month -Day $daysInMonth
+        $offset = ([int]$lastOfMonth.DayOfWeek - [int]$targetDay + 7) % 7
+        return $lastOfMonth.AddDays(-$offset)
+    }
+    else {
+        return $null
+    }
+}
+
 function Get-IcsWeekStartDate {
     param(
         [datetime]$Date,
@@ -429,6 +484,13 @@ function Expand-IcsEvent {
         }
         elseif ($freq -eq 'MONTHLY') {
             $candidate = $candidate.AddMonths($interval)
+            if (![string]::IsNullOrWhiteSpace($byDay)) {
+                $adjusted = Get-MonthlyByDayDate -Year $candidate.Year -Month $candidate.Month -ByDay $byDay
+                if ($adjusted) {
+                    $candidate = Get-Date -Year $adjusted.Year -Month $adjusted.Month -Day $adjusted.Day `
+                        -Hour $candidate.Hour -Minute $candidate.Minute -Second $candidate.Second
+                }
+            }
         }
         elseif ($freq -eq 'YEARLY') {
             $candidate = $candidate.AddYears($interval)

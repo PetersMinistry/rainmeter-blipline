@@ -1,5 +1,13 @@
 # Blipline Changelog
 
+## 0.3.9 Beta - 2026-06-15
+
+Recurrence accuracy patch for monthly BYDAY calendar events.
+
+### Fixed
+
+- Monthly recurring events that use `BYDAY` (e.g., 3rd Saturday, last Monday, 2nd Tuesday) now land on the correct date instead of the same day-of-month as the base event. Previously, `FREQ=MONTHLY;BYDAY=3SA` would skip ahead by month number only, putting an event meant for the 3rd Saturday of June on June 17 (Wednesday) instead of June 20 (Saturday).
+
 ## 0.3.8 Beta - 2026-06-02
 
 Performance update introducing 60fps smooth scroll and encoding fixes.

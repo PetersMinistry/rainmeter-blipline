@@ -254,7 +254,7 @@ local function set_row(slot, event, active, headerDate, y)
   local style = SKIN:GetVariable('TimelineStyle') or 'Glass'
   local textColor = active and skin_var('RowActiveTextColor', '255,226,84,255') or skin_var('RowNormalTextColor', '245,247,252,238')
   local subColor = active and skin_var('RowActiveSubColor', '230,214,156,238') or skin_var('RowNormalSubColor', '170,178,190,226')
-  local color = active and skin_var('AccentColor', activeColor) or event.color
+  local color = event.color
   local showCalendar = read_bool_variable('ShowCalendarName', true)
   local showLocation = read_bool_variable('ShowEventLocation', true)
   local showNotes = read_bool_variable('ShowEventNotes', true)

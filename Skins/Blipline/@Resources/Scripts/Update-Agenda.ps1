@@ -309,6 +309,67 @@ function Test-IcsDayMatch {
     return $false
 }
 
+function Get-MonthlyByDayDate {
+    param(
+        [int]$Year,
+        [int]$Month,
+        [string]$ByDay
+    )
+
+    if ([string]::IsNullOrWhiteSpace($ByDay)) {
+        return $null
+    }
+
+    $dayMap = @{
+        SU = [DayOfWeek]::Sunday
+        MO = [DayOfWeek]::Monday
+        TU = [DayOfWeek]::Tuesday
+        WE = [DayOfWeek]::Wednesday
+        TH = [DayOfWeek]::Thursday
+        FR = [DayOfWeek]::Friday
+        SA = [DayOfWeek]::Saturday
+    }
+
+    # Parse BYDAY ordinal and day code: "3SA" → ordinal=3, dayCode=SA
+    $ordinal = 0
+    $dayCode = $ByDay.Trim().ToUpperInvariant()
+    if ($dayCode -match '^([+-]?\d+)([A-Z]{2})$') {
+        $ordinal = [int]$matches[1]
+        $dayCode = $matches[2]
+    }
+
+    if (!$dayMap.ContainsKey($dayCode)) {
+        return $null
+    }
+
+    $targetDay = $dayMap[$dayCode]
+    $daysInMonth = [DateTime]::DaysInMonth($Year, $Month)
+    $firstOfMonth = Get-Date -Year $Year -Month $Month -Day 1
+
+    if ($ordinal -gt 0) {
+        $firstOccurrence = $firstOfMonth.AddDays(([int]$targetDay - [int]$firstOfMonth.DayOfWeek + 7) % 7)
+        $result = $firstOccurrence.AddDays(7 * ($ordinal - 1))
+        if ($result.Month -ne $Month) {
+            return $null
+        }
+        return $result
+    elseif ($ordinal -lt 0) {
+        # Nth-from-last occurrence (e.g., -1MO = last Monday, -2MO = 2nd-to-last)
+        $lastOfMonth = Get-Date -Year $Year -Month $Month -Day $daysInMonth
+        $offset = ([int]$lastOfMonth.DayOfWeek - [int]$targetDay + 7) % 7
+        $lastOccurrence = $lastOfMonth.AddDays(-$offset)
+        $result = $lastOccurrence.AddDays(7 * ($ordinal + 1))
+        if ($result.Month -ne $Month) {
+            return $null  # Ordinal exceeds available occurrences this month
+        }
+        return $result
+    }
+    else {
+        # No ordinal prefix — not meaningful for MONTHLY; fall back
+        return $null
+    }
+}
+
 function Get-IcsWeekStartDate {
     param(
         [datetime]$Date,
@@ -428,7 +489,20 @@ function Expand-IcsEvent {
             }
         }
         elseif ($freq -eq 'MONTHLY') {
-            $candidate = $candidate.AddMonths($interval)
+            do {
+                $candidate = $candidate.AddMonths($interval)
+                $byDayValid = $true
+                if (![string]::IsNullOrWhiteSpace($byDay)) {
+                    $adjusted = Get-MonthlyByDayDate -Year $candidate.Year -Month $candidate.Month -ByDay $byDay
+                    if ($adjusted) {
+                        $candidate = Get-Date -Year $adjusted.Year -Month $adjusted.Month -Day $adjusted.Day `
+                            -Hour $candidate.Hour -Minute $candidate.Minute -Second $candidate.Second
+                    }
+                    else {
+                        $byDayValid = $false
+                    }
+                }
+            } while (!$byDayValid -and $guard -lt 1000)
         }
         elseif ($freq -eq 'YEARLY') {
             $candidate = $candidate.AddYears($interval)
@@ -935,7 +1009,7 @@ try {
             }
 
             $detectedColor = Get-IcsCalendarColor -Content $content
-            $calendarColor = if (![string]::IsNullOrWhiteSpace($detectedColor)) { $detectedColor } else { $feed.Color }
+            $calendarColor = if (![string]::IsNullOrWhiteSpace($feed.Color) -and $feed.Color -ne '255,255,255,0') { $feed.Color } elseif (![string]::IsNullOrWhiteSpace($detectedColor)) { $detectedColor } else { $feed.Color }
             $events = Parse-IcsEvents -Content $content -CalendarName $calendarName -Color $calendarColor -WindowStart $parseWindowStart -WindowEnd $parseWindowEnd
             foreach ($event in $events) { $allEvents.Add($event) }
             $feedStatuses.Add([pscustomobject]@{

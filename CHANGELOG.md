@@ -1,5 +1,17 @@
 # Blipline Changelog
 
+## 0.3.9 Beta - 2026-06-15
+
+Recurrence accuracy patch for monthly BYDAY calendar events, plus color display fixes.
+
+### Fixed
+
+- Monthly recurring events that use `BYDAY` (e.g., 3rd Saturday, last Monday, 2nd Tuesday) now land on the correct date instead of the same day-of-month as the base event.
+- Negative BYDAY ordinals (`-2MO`, `-3MO`) now correctly resolve to Nth-from-last weekdays.
+- Months where the requested ordinal does not exist (e.g., `BYDAY=5MO` in a 4-Monday month) are now skipped instead of producing fabricated dates.
+- Settings palette colors now take priority over feed-detected colors (`X-WR-CALCOLOR`) so user-assigned colors always show on the timeline.
+- Active/current event dot now uses the event's assigned feed color instead of being overridden with the yellow accent color.
+
 ## 0.3.8 Beta - 2026-06-02
 
 Performance update introducing 60fps smooth scroll and encoding fixes.

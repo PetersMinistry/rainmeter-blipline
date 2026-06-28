@@ -1,5 +1,19 @@
 # Blipline Changelog
 
+## 0.3.10 Beta - 2026-06-28
+
+Feed capacity update for larger planner sets.
+
+### Added
+
+- Increased supported iCal feed slots from 8 to 15.
+- Added setup-panel status rows and color selection targets for feeds 9 through 15.
+- Added `CalendarUrl1` compatibility for users who manually number the first feed URL.
+
+### Fixed
+
+- Restored the missing monthly `BYDAY` recurrence brace in the packaged source script.
+
 ## 0.3.9 Beta - 2026-06-15
 
 Recurrence accuracy patch for monthly BYDAY calendar events, plus color display fixes.

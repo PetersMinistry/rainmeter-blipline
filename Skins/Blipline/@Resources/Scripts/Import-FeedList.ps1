@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$SettingsPath,
 
-    [int]$MaxFeeds = 8,
+    [int]$MaxFeeds = 15,
 
     [string]$FeedText = '',
 
@@ -62,8 +62,12 @@ $palette = @(
     '234,191,48,245',
     '255,132,64,245',
     '92,214,168,245',
+    '255,108,180,245',
+    '130,204,255,245',
+    '186,220,88,245',
+    '200,156,255,245',
     '205,214,224,230',
-    '255,108,180,245'
+    '255,255,255,245'
 )
 
 $resolvedPath = [Environment]::ExpandEnvironmentVariables($SettingsPath)
@@ -71,7 +75,7 @@ if (!(Test-Path -LiteralPath $resolvedPath)) {
     throw "Settings file not found: $resolvedPath"
 }
 
-$max = [Math]::Max(1, [Math]::Min(12, $MaxFeeds))
+$max = [Math]::Max(1, [Math]::Min(15, $MaxFeeds))
 
 $lines = @(Get-Content -LiteralPath $resolvedPath)
 
@@ -79,6 +83,9 @@ if ($Clear) {
     for ($i = 1; $i -le $max; $i++) {
         $key = if ($i -eq 1) { 'CalendarUrl' } else { "CalendarUrl$i" }
         $lines = @(Set-IncValue -Lines $lines -Name $key -Value '')
+        if ($i -eq 1) {
+            $lines = @(Set-IncValue -Lines $lines -Name 'CalendarUrl1' -Value '')
+        }
         $lines = @(Set-IncValue -Lines $lines -Name "Feed${i}Name" -Value '')
         $lines = @(Set-IncValue -Lines $lines -Name "Feed${i}Result" -Value '')
         $lines = @(Set-IncValue -Lines $lines -Name "Feed${i}Count" -Value '')
@@ -126,6 +133,9 @@ for ($i = 1; $i -le $max; $i++) {
     $key = if ($i -eq 1) { 'CalendarUrl' } else { "CalendarUrl$i" }
     $value = if ($i -le $feeds.Count) { $feeds[$i - 1] } else { '' }
     $lines = @(Set-IncValue -Lines $lines -Name $key -Value $value)
+    if ($i -eq 1) {
+        $lines = @(Set-IncValue -Lines $lines -Name 'CalendarUrl1' -Value $value)
+    }
     $lines = @(Set-IncValue -Lines $lines -Name "CalendarColor$i" -Value $palette[($i - 1) % $palette.Count])
     $lines = @(Set-IncValue -Lines $lines -Name "Feed${i}Name" -Value $(if ($i -le $feeds.Count) { "Feed $i pending refresh" } else { '' }))
     $lines = @(Set-IncValue -Lines $lines -Name "Feed${i}Result" -Value $(if ($i -le $feeds.Count) { 'Pending' } else { '' }))

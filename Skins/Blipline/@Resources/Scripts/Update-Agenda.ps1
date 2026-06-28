@@ -330,7 +330,9 @@ function Get-MonthlyByDayDate {
         SA = [DayOfWeek]::Saturday
     }
 
-    # Parse BYDAY ordinal and day code: "3SA" → ordinal=3, dayCode=SA
+    # Parse BYDAY ordinal and day code: "3SA" => ordinal=3, dayCode=SA
+    #                                        "-1MO" => ordinal=-1, dayCode=MO
+    #                                        "SA" => ordinal=0, dayCode=SA
     $ordinal = 0
     $dayCode = $ByDay.Trim().ToUpperInvariant()
     if ($dayCode -match '^([+-]?\d+)([A-Z]{2})$') {
@@ -347,12 +349,14 @@ function Get-MonthlyByDayDate {
     $firstOfMonth = Get-Date -Year $Year -Month $Month -Day 1
 
     if ($ordinal -gt 0) {
+        # Nth occurrence from start (e.g., 3SA = 3rd Saturday)
         $firstOccurrence = $firstOfMonth.AddDays(([int]$targetDay - [int]$firstOfMonth.DayOfWeek + 7) % 7)
         $result = $firstOccurrence.AddDays(7 * ($ordinal - 1))
         if ($result.Month -ne $Month) {
-            return $null
+            return $null  # Ordinal exceeds available occurrences this month
         }
         return $result
+    }
     elseif ($ordinal -lt 0) {
         # Nth-from-last occurrence (e.g., -1MO = last Monday, -2MO = 2nd-to-last)
         $lastOfMonth = Get-Date -Year $Year -Month $Month -Day $daysInMonth
@@ -737,7 +741,7 @@ function Get-CalendarFeeds {
 
     $feeds = @()
     $maxFeeds = [int](Get-SettingValue -Path $Path -Name 'CalendarSlots' -Default '8')
-    $maxFeeds = [Math]::Max(3, [Math]::Min(12, $maxFeeds))
+    $maxFeeds = [Math]::Max(3, [Math]::Min(15, $maxFeeds))
     $defaultColors = @(
         '255,199,50,255',
         '104,170,255,245',
@@ -750,12 +754,19 @@ function Get-CalendarFeeds {
         '118,118,118,245',
         '255,132,64,245',
         '92,214,168,245',
+        '255,108,180,245',
+        '130,204,255,245',
+        '186,220,88,245',
+        '200,156,255,245',
         '205,214,224,230'
     )
 
     for ($i = 1; $i -le $maxFeeds; $i++) {
         $urlKey = if ($i -eq 1) { 'CalendarUrl' } else { "CalendarUrl$i" }
         $url = Get-SettingValue -Path $Path -Name $urlKey
+        if ($i -eq 1 -and [string]::IsNullOrWhiteSpace($url)) {
+            $url = Get-SettingValue -Path $Path -Name 'CalendarUrl1'
+        }
         if ([string]::IsNullOrWhiteSpace($url)) { continue }
         $defaultColor = $defaultColors[($i - 1) % $defaultColors.Count]
 
@@ -972,7 +983,7 @@ function Write-AgendaCache {
 try {
     $useSample = Get-SettingValue -Path $SettingsPath -Name 'UseSample' -Default '0'
     $maxStatusFeeds = [int](Get-SettingValue -Path $SettingsPath -Name 'CalendarSlots' -Default '8')
-    $maxStatusFeeds = [Math]::Max(3, [Math]::Min(12, $maxStatusFeeds))
+    $maxStatusFeeds = [Math]::Max(3, [Math]::Min(15, $maxStatusFeeds))
     if ($useSample -eq '1') {
         Save-FeedStatus -Path $SettingsPath -Statuses @() -MaxFeeds $maxStatusFeeds -Summary 'Demo data'
         Write-AgendaCache -Events (Get-SampleEvents) -Path $OutputPath -Status 'Demo data'

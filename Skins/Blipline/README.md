@@ -18,7 +18,7 @@ Blipline\Timeline\Timeline.ini
 
 ## Setup
 
-Copy one or more private iCal URLs to the clipboard, one per line, then click Import Clipboard in the settings panel.
+Copy one or more private iCal URLs to the clipboard, one per line, then click Import Clipboard in the settings panel. Up to fifteen feeds are supported.
 
 Leave feeds blank to preview Blipline with sample events.
 

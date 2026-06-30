@@ -13,6 +13,7 @@ local lastStyleSignature = nil
 local lastRenderedStartIndex = nil
 local lastRenderedSelected = nil
 local lastRenderedMaxRows = nil
+local lastRenderedRowVisible = {}
 
 local rowBaseY = {94, 134, 174, 214, 254, 294}
 local rowGap = 40
@@ -719,21 +720,31 @@ function Update(force)
     SKIN:Bang('!SetVariable', 'CountdownY', tostring(math.floor(pointerY - 20 + 0.5)))
     SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(math.floor(pointerY + 8 + 0.5)))
 
+    local scrollTop = tonumber(SKIN:GetVariable('ScrollY') or '') or 72
+    local scrollHeight = tonumber(SKIN:GetVariable('ScrollH') or '') or 376
+    local visibleTop = scrollTop - math.max(18, round(24 * currentScale))
+    local visibleBottom = scrollTop + scrollHeight - math.max(22, round(26 * currentScale))
+
     for slot = 1, 6 do
       local event = events[startIndex + slot - 1]
-      if event and slot <= maxRows then
+      local visible = event and slot <= maxRows and rowY[slot] >= visibleTop and rowY[slot] <= visibleBottom
+      if visible then
+        local needsContent = rowContentDirty or not lastRenderedRowVisible[slot]
         if showSeparator[slot] then
-          set_separator(slot, event, rowY[slot], not rowContentDirty)
-        elseif rowContentDirty then
+          set_separator(slot, event, rowY[slot], not needsContent)
+        elseif needsContent then
           clear_separator(slot)
         end
-        if rowContentDirty then
+        if needsContent then
           set_row(slot, event, selectedVisible and startIndex + slot - 1 == selected, headerDate, rowY[slot])
         else
           SKIN:Bang('!SetVariable', 'Row' .. slot .. 'Y', tostring(math.floor(rowY[slot] + 0.5)))
         end
-      elseif rowContentDirty then
+        lastRenderedRowVisible[slot] = true
+      elseif rowContentDirty or lastRenderedRowVisible[slot] then
+        clear_separator(slot)
         clear_row(slot)
+        lastRenderedRowVisible[slot] = false
       end
     end
 

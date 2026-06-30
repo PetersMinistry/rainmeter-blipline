@@ -8,7 +8,7 @@ It includes current/next event focus, a side countdown, smooth scrolling, multi-
 
 ## Download
 
-Current beta: `v0.3.10-beta.1`
+Current beta: `v0.3.11-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
@@ -23,7 +23,8 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Supports up to fifteen iCal feed slots.
 - Merges multiple calendars into one readable agenda.
 - Auto-detects calendar names and iCal feed colors when the feed provides them.
-- Lets you assign feed colors from a built-in palette when Google does not expose colors.
+- Lets you assign feed colors from a 24-swatch built-in palette when Google does not expose colors.
+- Supports optional 24-hour event times and a custom all-day label through `UserSettings.inc`.
 - Includes event detail toggles for calendar name, location, and notes.
 - Handles daily, weekly, monthly, and yearly recurring events.
 - Handles edited single instances of recurring events through `RECURRENCE-ID`.
@@ -76,6 +77,8 @@ Private iCal URLs are secret read-only links. Anyone with one can read that cale
 
 Use the lower-right corner of the timeline to resize it. Scroll on the corner for small size changes, or right-click it to reset.
 
+Location and notes are read from each calendar event's Location and Description/Notes fields. To localize time display, set `TimeFormat=24` and update `AllDayLabel` in `Blipline\@Resources\UserSettings.inc`.
+
 ## Privacy
 
 - Your private iCal URLs stay in your local Rainmeter skin settings.
@@ -89,5 +92,5 @@ Use the lower-right corner of the timeline to resize it. Scroll on the corner fo
 
 ## Status
 
-`v0.3.10-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`v0.3.11-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
 

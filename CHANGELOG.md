@@ -1,5 +1,16 @@
 # Blipline Changelog
 
+## 0.3.12 Beta - 2026-06-30
+
+Issue #2 hotfix for international text and timeline start position.
+
+### Fixed
+
+- Preserved UTF-8 accented calendar text in generated agenda variables instead of stripping or corrupting characters such as `Frühstück`, `Rücken`, and `Café`.
+- Wrote the generated agenda cache as UTF-8 to avoid Windows default-codepage replacement characters.
+- Started the default timeline view at the current or next event instead of placing two cached past events above it.
+- Applied the 15-feed cap consistently when matching event colors to detected calendar names.
+
 ## 0.3.11 Beta - 2026-06-30
 
 Settings and localization update requested by early users.

@@ -1,5 +1,19 @@
 # Blipline Changelog
 
+## 0.3.11 Beta - 2026-06-30
+
+Settings and localization update requested by early users.
+
+### Added
+
+- Expanded the feed color palette from 12 to 24 swatches.
+- Added `TimeFormat=24` support for 24-hour event times.
+- Added `AllDayLabel` so the all-day text can be translated in `UserSettings.inc`.
+
+### Fixed
+
+- Hid timeline rows that would be pushed below the scroll viewport by stacked date separators, preventing clipped bottom rows at some scales.
+
 ## 0.3.10 Beta - 2026-06-28
 
 Feed capacity update for larger planner sets.

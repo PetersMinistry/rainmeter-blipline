@@ -758,7 +758,16 @@ function Get-CalendarFeeds {
         '130,204,255,245',
         '186,220,88,245',
         '200,156,255,245',
-        '205,214,224,230'
+        '205,214,224,230',
+        '255,255,255,245',
+        '230,147,139,245',
+        '176,150,136,245',
+        '255,176,96,245',
+        '90,220,220,245',
+        '128,144,255,245',
+        '168,235,140,245',
+        '255,214,120,245',
+        '172,172,172,245'
     )
 
     for ($i = 1; $i -le $maxFeeds; $i++) {
@@ -939,9 +948,16 @@ function Write-AgendaCache {
             Select-Object -First $effectiveCacheLimit
     )
 
+    $timeFormatSetting = (Get-SettingValue -Path $SettingsPath -Name 'TimeFormat' -Default '12').Trim()
+    $timePattern = if ($timeFormatSetting -match '(?i)^(24|24h|hh:mm|h24|true|1)$') { 'HH:mm' } else { 'h:mm tt' }
+    $allDayLabel = Convert-DisplayText (Get-SettingValue -Path $SettingsPath -Name 'AllDayLabel' -Default 'All day')
+    if ([string]::IsNullOrWhiteSpace($allDayLabel)) {
+        $allDayLabel = 'All day'
+    }
+
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('[Variables]')
-    $lines.Add(('LastUpdated={0}' -f (Get-Date -Format 'h:mm tt')))
+    $lines.Add(('LastUpdated={0}' -f (Get-Date -Format $timePattern)))
     $lines.Add(('SourceStatus={0}' -f $Status))
     $lines.Add(('EventCount={0}' -f $filtered.Count))
 
@@ -950,8 +966,8 @@ function Write-AgendaCache {
         $n = $i + 1
         $event = $filtered[$i]
         $color = if ($event.Color) { $event.Color } else { $colors[$i % $colors.Count] }
-        $time = if ($event.AllDay) { 'All day' } else { $event.Start.ToString('h:mm tt') }
-        $endTime = if ($event.AllDay) { '' } else { $event.End.ToString('h:mm tt') }
+        $time = if ($event.AllDay) { $allDayLabel } else { $event.Start.ToString($timePattern) }
+        $endTime = if ($event.AllDay) { '' } else { $event.End.ToString($timePattern) }
         $dateLabel = $event.Start.ToString('ddd  dd MMM').ToUpperInvariant()
         $icon = if ($event.Icon) { $event.Icon } else { Get-EventIcon $event.Title }
         $title = Convert-TitleText $event.Title

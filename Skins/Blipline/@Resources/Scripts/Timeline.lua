@@ -105,9 +105,13 @@ local function max_scroll(maxRows)
   return math.max(0, #events - maxRows)
 end
 
+local function home_anchor(selected, maxRows)
+  return clamp(selected - 1, 0, max_scroll(maxRows))
+end
+
 local function feed_color_for_calendar(calendar)
   if calendar == nil or calendar == '' then return '' end
-  local slots = read_number_variable('CalendarSlots', 8, 1, 12)
+  local slots = read_number_variable('CalendarSlots', 8, 1, 15)
   for i = 1, slots do
     local name = trim(SKIN:GetVariable('Feed' .. i .. 'Name') or SKIN:GetVariable('CalendarName' .. i) or '')
     local color = trim(SKIN:GetVariable('Feed' .. i .. 'Color') or SKIN:GetVariable('CalendarColor' .. i) or '')
@@ -593,7 +597,7 @@ function CenterNow()
   local selected = find_selected(os.time())
   if selected == 0 then return '' end
 
-  scrollTarget = clamp(selected - 2, 0, max_scroll(maxRows))
+  scrollTarget = home_anchor(selected, maxRows)
   local delta = scrollTarget - scrollCurrent
   local recenterWindow = 6.0
   if math.abs(delta) > recenterWindow then
@@ -669,7 +673,7 @@ function Update(force)
     SKIN:Bang('!SetVariable', 'CountdownY', '146')
     for slot = 1, 6 do clear_row(slot) end
   else
-    local anchor = clamp(selected - 2, 0, max_scroll(maxRows))
+    local anchor = home_anchor(selected, maxRows)
     if homeAnimating then
       scrollTarget = anchor
     elseif not userScrolled then

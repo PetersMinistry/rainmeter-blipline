@@ -118,6 +118,19 @@ function Convert-IcsText {
     return $Text.Replace('\n', ' ').Replace('\N', ' ').Replace('\,', ',').Replace('\;', ';').Replace('\\', '\').Trim()
 }
 
+function Convert-RainmeterText {
+    param([string]$Text)
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return ''
+    }
+
+    $clean = $Text -replace '[\uD800-\uDFFF]', ''
+    $clean = $clean -replace '[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', ''
+
+    return (($clean -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
+}
+
 function Convert-DisplayText {
     param([string]$Text)
 
@@ -143,10 +156,8 @@ function Convert-DisplayText {
     $clean = $clean.Replace(([char]0x2013).ToString(), '-')
     $clean = $clean.Replace(([char]0x2014).ToString(), '-')
     $clean = $clean.Replace(([char]0x2020).ToString(), '+')
-    $clean = $clean -replace '[\uD800-\uDFFF]', ''
-    $clean = $clean -replace '[^\x20-\x7E]', ''
 
-    return (($clean -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
+    return Convert-RainmeterText $clean
 }
 
 function Get-EventIcon {
@@ -198,10 +209,8 @@ function Convert-TitleText {
     $clean = $clean.Replace(([char]0x201D).ToString(), '"')
     $clean = $clean.Replace(([char]0x2013).ToString(), '-')
     $clean = $clean.Replace(([char]0x2014).ToString(), '-')
-    $clean = $clean -replace '[\uD800-\uDFFF]', ''
-    $clean = $clean -replace '[^\x20-\x7E]', ''
 
-    return (($clean -replace '\s+', ' ').Trim() -replace '^\s*[-|>]+\s*', '' -replace '[\r\n=]', ' ')
+    return ((Convert-RainmeterText $clean) -replace '^\s*[-|>]+\s*', '')
 }
 
 function Convert-HexColorToRainmeter {
@@ -993,7 +1002,8 @@ function Write-AgendaCache {
         $lines.Add(("Event{0}Color={1}" -f $n, $color))
     }
 
-    Set-Content -LiteralPath $Path -Value $lines -Encoding Default
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllLines($Path, [string[]]$lines, $utf8NoBom)
 }
 
 try {

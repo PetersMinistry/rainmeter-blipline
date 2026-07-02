@@ -894,6 +894,9 @@ function Write-AgendaCache {
     $minRows = [Math]::Max(1, $maxRows)
     $cacheLimit = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheLimit' -Default '120')
     $cacheLimit = [Math]::Max($minRows, $cacheLimit)
+    $configuredFeedCount = @(Get-CalendarFeeds -Path $SettingsPath).Count
+    $cacheScale = [Math]::Max(1, [Math]::Ceiling([Math]::Max(1, $configuredFeedCount) / 5))
+    $effectiveCacheLimit = [Math]::Min($cacheLimit * $cacheScale, [Math]::Max($cacheLimit, 360))
     $pastDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CachePastDays' -Default '14')
     $futureDays = [int](Get-SettingValue -Path $SettingsPath -Name 'CacheFutureDays' -Default '90')
     $perCalendarMinimum = [int](Get-SettingValue -Path $SettingsPath -Name 'CachePerCalendarMinimum' -Default '24')
@@ -912,8 +915,8 @@ function Write-AgendaCache {
     )
     $past = @($sorted | Where-Object { $_.End -lt $now })
     $future = @($sorted | Where-Object { $_.End -ge $now })
-    $pastLimit = [Math]::Min($past.Count, [Math]::Max($maxRows, [Math]::Floor($cacheLimit * 0.25)))
-    $futureLimit = [Math]::Max($maxRows, $cacheLimit - $pastLimit)
+    $pastLimit = [Math]::Min($past.Count, [Math]::Max($maxRows, [Math]::Floor($effectiveCacheLimit * 0.25)))
+    $futureLimit = [Math]::Max($maxRows, $effectiveCacheLimit - $pastLimit)
     $timelineEvents = @()
     if ($pastLimit -gt 0) {
         $timelineEvents += @($past | Select-Object -Last $pastLimit)
@@ -926,8 +929,6 @@ function Write-AgendaCache {
             $timelineEvents += @($calendarPast + $calendarFuture)
         }
     }
-
-    $effectiveCacheLimit = $cacheLimit
 
     $filtered = @()
     $seen = @{}

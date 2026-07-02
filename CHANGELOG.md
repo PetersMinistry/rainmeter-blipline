@@ -1,5 +1,14 @@
 # Blipline Changelog
 
+## 0.3.13 Beta - 2026-07-01
+
+Multi-calendar scroll-depth update for larger feed sets.
+
+### Changed
+
+- Automatically expands the timeline cache for configured multi-calendar setups: 1-5 feeds keep the base cache, 6-10 feeds get double depth, and 11-15 feeds get triple depth up to a conservative default cap.
+- Keeps smaller setups at the same scroll depth and performance profile while allowing 15-feed setups to scroll farther into the future.
+
 ## 0.3.12 Beta - 2026-06-30
 
 Issue #2 hotfix for international text and timeline start position.

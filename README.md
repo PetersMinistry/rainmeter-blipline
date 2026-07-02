@@ -8,7 +8,7 @@ It includes current/next event focus, a side countdown, smooth scrolling, multi-
 
 ## Download
 
-Current beta: `v0.3.12-beta.1`
+Current beta: `v0.3.13-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
@@ -22,6 +22,7 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Imports multiple Google Calendar private iCal URLs from the clipboard, one per line.
 - Supports up to fifteen iCal feed slots.
 - Merges multiple calendars into one readable agenda.
+- Automatically expands scroll cache depth for larger multi-calendar setups.
 - Auto-detects calendar names and iCal feed colors when the feed provides them.
 - Lets you assign feed colors from a 24-swatch built-in palette when Google does not expose colors.
 - Supports optional 24-hour event times and a custom all-day label through `UserSettings.inc`.
@@ -92,5 +93,5 @@ Location and notes are read from each calendar event's Location and Description/
 
 ## Status
 
-`v0.3.12-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`v0.3.13-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
 

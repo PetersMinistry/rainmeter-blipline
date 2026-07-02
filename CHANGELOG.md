@@ -1,5 +1,20 @@
 # Blipline Changelog
 
+## 0.3.14 Beta - 2026-07-02
+
+Layout hardening for scaled and localized timelines.
+
+### Changed
+
+- Scales row time widths, row text heights, icon image sizes, date divider chips, and row offsets together with `UiScale`.
+- Centers date divider chips and divider dots from shared anchors so divider labels, lines, and dots stay aligned while scaled.
+- Keeps the countdown tab number and unit centered and capped so they remain readable at larger timeline scales.
+- Shows enabled notes in the normal event detail line instead of limiting notes to the dense style path.
+- Uses clipped detail/title text with ellipsis for long calendar, location, and note strings.
+- Adds Settings-panel timeline scale controls with minus, plus, reset, and numeric percent entry.
+- Removes the unreliable corner resize control and makes Settings the resize path.
+- Saves manually entered scale settings through the Settings panel.
+
 ## 0.3.13 Beta - 2026-07-01
 
 Multi-calendar scroll-depth update for larger feed sets.

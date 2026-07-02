@@ -1,14 +1,16 @@
 # Blipline
 
-Blipline is a Rainmeter agenda timeline for Google Calendar-style private iCal feeds. It turns your upcoming schedule into a clean desktop timeline so you can see what is coming up without constantly opening your calendar.
+Blipline is a Rainmeter agenda timeline for Google Calendar-style iCal feeds.
 
-It includes current/next event focus, a side countdown, smooth scrolling, multi-calendar support, color controls, corner resizing, and several visual templates depending on the look you are going for.
+Basically, it takes your upcoming schedule and turns it into a clean desktop timeline so you can see what is coming up without constantly opening your calendar.
+
+It includes current/next event focus, a side countdown, smooth scrolling, multi-calendar support, color controls, timeline scale controls in Settings, and several visual templates depending on the look you are going for.
 
 ![Blipline Classic timeline](docs/screenshots/blipline-classic.png)
 
 ## Download
 
-Current beta: `v0.3.13-beta.1`
+Current beta: `v0.3.14-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
@@ -18,15 +20,16 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Keeps a side countdown tag visible so the next thing is always obvious.
 - Scrolls through cached past and future events with the mouse wheel.
 - Clicks the countdown tag to glide back to the current or next event.
-- Resizes from the lower-right timeline corner, with mouse-wheel fine tuning and right-click reset.
+- Resizes from the Settings panel with minus, plus, `Reset 100%`, and custom percent entry.
 - Imports multiple Google Calendar private iCal URLs from the clipboard, one per line.
 - Supports up to fifteen iCal feed slots.
 - Merges multiple calendars into one readable agenda.
 - Automatically expands scroll cache depth for larger multi-calendar setups.
 - Auto-detects calendar names and iCal feed colors when the feed provides them.
-- Lets you assign feed colors from a 24-swatch built-in palette when Google does not expose colors.
+- Lets you assign feed colors from a 24-color built-in palette when Google does not expose colors.
 - Supports optional 24-hour event times and a custom all-day label through `UserSettings.inc`.
 - Includes event detail toggles for calendar name, location, and notes.
+- Keeps long localized titles/details clipped with ellipsis so scaling does not push rows out of alignment.
 - Handles daily, weekly, monthly, and yearly recurring events.
 - Handles edited single instances of recurring events through `RECURRENCE-ID`.
 - Keeps smaller calendars visible with per-calendar cache backfill.
@@ -76,9 +79,9 @@ In Google Calendar, copy each calendar private iCal URL. In Blipline settings, p
 
 Private iCal URLs are secret read-only links. Anyone with one can read that calendar feed, so do not post them publicly.
 
-Use the lower-right corner of the timeline to resize it. Scroll on the corner for small size changes, or right-click it to reset.
+Use Settings > Timeline scale to resize Blipline with minus, plus, `Reset 100%`, or a typed percent value.
 
-Location and notes are read from each calendar event's Location and Description/Notes fields. To localize time display, set `TimeFormat=24` and update `AllDayLabel` in `Blipline\@Resources\UserSettings.inc`.
+Location and notes are read from each calendar event's Location and Description/Notes fields. Enabled details share one clipped timeline detail line, so very long calendar, location, or note text may be shortened with ellipsis. To localize time display, set `TimeFormat=24` and update `AllDayLabel` in `Blipline\@Resources\UserSettings.inc`.
 
 ## Privacy
 
@@ -93,5 +96,5 @@ Location and notes are read from each calendar event's Location and Description/
 
 ## Status
 
-`v0.3.13-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`v0.3.14-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
 

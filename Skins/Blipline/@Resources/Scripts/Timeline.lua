@@ -53,6 +53,29 @@ local function trim(value)
   return (value or ''):gsub('^%s+', ''):gsub('%s+$', '')
 end
 
+local function add_detail_part(parts, enabled, value)
+  local clean = trim(value)
+  if enabled and clean ~= '' then table.insert(parts, clean) end
+end
+
+local function join_detail_parts(parts)
+  return table.concat(parts, '  |  ')
+end
+
+local function compact_detail(parts, fallbackParts)
+  local detail = join_detail_parts(parts)
+  local maxChars = tonumber(SKIN:GetVariable('RowDetailMaxChars') or '') or 72
+  if maxChars < 24 then maxChars = 24 end
+  if maxChars > 160 then maxChars = 160 end
+  maxChars = math.floor(maxChars)
+  if #detail <= maxChars then return detail end
+
+  local fallback = join_detail_parts(fallbackParts)
+  if fallback ~= '' and #fallback <= maxChars then return fallback end
+  if fallback ~= '' then return fallback end
+  return detail
+end
+
 local function read_number_variable(name, fallback, minValue, maxValue)
   local value = tonumber(SKIN:GetVariable(name) or '') or fallback
   if minValue and value < minValue then value = minValue end
@@ -264,22 +287,16 @@ local function set_row(slot, event, active, headerDate, y)
   local showLocation = read_bool_variable('ShowEventLocation', true)
   local showNotes = read_bool_variable('ShowEventNotes', true)
   local detailParts = {}
-  if showCalendar and event.calendar ~= '' then table.insert(detailParts, event.calendar) end
-  if showLocation and event.location ~= '' then table.insert(detailParts, event.location) end
-  if showNotes and style == 'Dense' and event.notes ~= '' then table.insert(detailParts, event.notes) end
-  local detail = table.concat(detailParts, '  |  ')
-  if detail == '' and showLocation then
-    detail = event.location
-  end
+  local preferredParts = {}
+  add_detail_part(detailParts, showCalendar, event.calendar)
+  add_detail_part(detailParts, showLocation, event.location)
+  add_detail_part(detailParts, showNotes, event.notes)
+  add_detail_part(preferredParts, showLocation, event.location)
+  add_detail_part(preferredParts, showNotes, event.notes)
+  add_detail_part(preferredParts, showCalendar, event.calendar)
+  local detail = compact_detail(detailParts, preferredParts)
   if style == 'Dense' then
-    detail = showLocation and event.location or ''
-    if showNotes and event.notes ~= '' and detail ~= '' then
-      detail = detail .. '  |  ' .. event.notes
-    elseif showNotes and event.notes ~= '' then
-      detail = event.notes
-    elseif detail == '' and showCalendar then
-      detail = event.calendar
-    end
+    detail = compact_detail(preferredParts, detailParts)
   end
   if style == 'Focus' and not active then
     detail = ''
@@ -428,7 +445,15 @@ local function apply_style(force)
     preset[key] = scaled(preset[key], scale, key == 'panelRadius' and 2 or 1)
   end
   preset.countdownX = scaled(preset.countdownX, scale, 0)
-  preset.countdownTextX = scaled(preset.countdownTextX, scale, 20)
+  preset.countdownTextX = tostring((tonumber(preset.countdownX) or 0) + 34)
+
+  local dividerChipW = math.max(70, round(70 * scale))
+  local dividerChipH = math.max(16, round(16 * scale))
+  local dividerDotSize = math.max(5, round(5 * scale))
+  local dividerTextX = tonumber(preset.divTextX) or 356
+  local timelineX = tonumber(preset.timelineX) or 232
+  preset.divChipX = tostring(round(dividerTextX - (dividerChipW / 2)))
+  preset.divDotX = tostring(round(timelineX - (dividerDotSize / 2)))
 
   local scaledBaseY = {}
   for index, y in ipairs(preset.baseY) do
@@ -451,20 +476,43 @@ local function apply_style(force)
     preset.sub = scaled(preset.sub, scale, 7)
   end
 
-  local panelX = tonumber(preset.panelX) or 92
-  local panelY = tonumber(preset.panelY) or 22
-  local panelW = tonumber(preset.panelW) or 526
-  local panelH = tonumber(preset.panelH) or 446
-  local handleSize = math.max(24, round(28 * scale))
+  local rowTimeW = math.max(72, round(72 * scale))
+  local rowTimeH = math.max(18, round(18 * scale))
+  local rowTitleH = math.max(22, round(22 * scale))
+  local rowDetailH = math.max(16, round(16 * scale))
+  local rowIconSize = math.max(18, round(18 * scale))
+  local rowTitleOffsetY = round(-3 * scale)
+  local rowDetailOffsetY = math.max(17, round(17 * scale))
+  local rowDotCenterOffsetY = math.max(9, round(9 * scale))
+  local rowIconOffsetY = round(-1 * scale)
+  local detailWidth = tonumber(preset.detailW) or 318
+  local subSize = tonumber(preset.sub) or 8
+  local detailMaxChars = math.max(32, math.min(140, math.floor(detailWidth / math.max(4.5, subSize * 0.58))))
 
   SKIN:Bang('!SetVariable', 'UiScale', tostring(scalePercent))
   SKIN:Bang('!SetVariable', 'RowTitleSize', preset.title)
   SKIN:Bang('!SetVariable', 'RowSubSize', preset.sub)
   SKIN:Bang('!SetVariable', 'RowTimeSize', scaled(11, scale, 8))
+  SKIN:Bang('!SetVariable', 'RowTimeW', tostring(rowTimeW))
+  SKIN:Bang('!SetVariable', 'RowTimeH', tostring(rowTimeH))
+  SKIN:Bang('!SetVariable', 'RowTitleH', tostring(rowTitleH))
+  SKIN:Bang('!SetVariable', 'RowDetailH', tostring(rowDetailH))
+  SKIN:Bang('!SetVariable', 'RowIconSize', tostring(rowIconSize))
+  SKIN:Bang('!SetVariable', 'RowTitleOffsetY', tostring(rowTitleOffsetY))
+  SKIN:Bang('!SetVariable', 'RowDetailOffsetY', tostring(rowDetailOffsetY))
+  SKIN:Bang('!SetVariable', 'RowDotCenterOffsetY', tostring(rowDotCenterOffsetY))
+  SKIN:Bang('!SetVariable', 'RowIconOffsetY', tostring(rowIconOffsetY))
+  SKIN:Bang('!SetVariable', 'RowDetailMaxChars', tostring(detailMaxChars))
   SKIN:Bang('!SetVariable', 'HeaderSize', scaled(11, scale, 8))
   SKIN:Bang('!SetVariable', 'CalendarSize', scaled(8, scale, 6))
-  SKIN:Bang('!SetVariable', 'CountdownNumberSize', scaled(18, scale, 10))
-  SKIN:Bang('!SetVariable', 'CountdownUnitSize', scaled(9, scale, 7))
+  SKIN:Bang('!SetVariable', 'DividerChipW', tostring(dividerChipW))
+  SKIN:Bang('!SetVariable', 'DividerChipH', tostring(dividerChipH))
+  SKIN:Bang('!SetVariable', 'DividerDotSize', tostring(dividerDotSize))
+  SKIN:Bang('!SetVariable', 'DividerTextW', tostring(dividerChipW))
+  SKIN:Bang('!SetVariable', 'DividerTextH', tostring(math.max(14, round(14 * scale))))
+  SKIN:Bang('!SetVariable', 'DividerTextSize', scaled(7, scale, 6))
+  SKIN:Bang('!SetVariable', 'CountdownNumberSize', tostring(math.min(20, tonumber(scaled(18, scale, 10)) or 18)))
+  SKIN:Bang('!SetVariable', 'CountdownUnitSize', tostring(math.min(10, tonumber(scaled(9, scale, 7)) or 9)))
   SKIN:Bang('!SetVariable', 'RowTitleW', preset.titleW)
   SKIN:Bang('!SetVariable', 'RowDetailW', preset.detailW)
   SKIN:Bang('!SetVariable', 'TimelineX', preset.timelineX)
@@ -521,12 +569,6 @@ local function apply_style(force)
   SKIN:Bang('!SetVariable', 'PanelSheen', preset.sheen)
   SKIN:Bang('!SetVariable', 'ActiveGlow1', preset.glow1)
   SKIN:Bang('!SetVariable', 'ActiveGlow2', preset.glow2)
-  SKIN:Bang('!SetVariable', 'ResizeHandleX', tostring(panelX + panelW - handleSize - 8))
-  SKIN:Bang('!SetVariable', 'ResizeHandleY', tostring(panelY + panelH - handleSize - 8))
-  SKIN:Bang('!SetVariable', 'ResizeHandleSize', tostring(handleSize))
-  SKIN:Bang('!SetVariable', 'ResizeHandleInset', tostring(math.max(6, round(8 * scale))))
-  SKIN:Bang('!SetVariable', 'ResizeHandleStep', tostring(math.max(6, round(7 * scale))))
-  SKIN:Bang('!SetVariable', 'ResizeScaleText', tostring(scalePercent) .. '%')
 end
 
 local function find_selected(now)
@@ -619,26 +661,6 @@ function PreviewScale(percent)
   local maxScale = read_number_variable('UiScaleMax', 145, minScale, 200)
   local nextScale = tonumber(percent or '') or 100
   previewScale = clamp(nextScale, minScale, maxScale)
-  lastRenderedStartIndex = nil
-  Update(true)
-  return ''
-end
-
-function NudgeScale(delta)
-  local minScale = read_number_variable('UiScaleMin', 70, 50, 100)
-  local maxScale = read_number_variable('UiScaleMax', 145, minScale, 200)
-  local step = tonumber(delta or '0') or 0
-  local base = previewScale or tonumber(SKIN:GetVariable('UiScale') or '') or 100
-  previewScale = clamp(base + step, minScale, maxScale)
-  SKIN:Bang('!WriteKeyValue', 'Variables', 'UiScale', tostring(previewScale), '#@#UserSettings.inc')
-  lastRenderedStartIndex = nil
-  Update(true)
-  return ''
-end
-
-function ResetScale()
-  previewScale = 100
-  SKIN:Bang('!WriteKeyValue', 'Variables', 'UiScale', '100', '#@#UserSettings.inc')
   lastRenderedStartIndex = nil
   Update(true)
   return ''

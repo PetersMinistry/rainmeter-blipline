@@ -107,8 +107,8 @@ function Save-FeedStatus {
         $lines = @(Set-SettingValue -Lines $lines -Name "Feed${i}Color" -Value $color)
     }
 
-    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    [System.IO.File]::WriteAllLines($Path, $lines, $utf8NoBom)
+    $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+    [System.IO.File]::WriteAllLines($Path, $lines, $utf8Bom)
 }
 
 function Convert-IcsText {
@@ -125,10 +125,53 @@ function Convert-RainmeterText {
         return ''
     }
 
-    $clean = $Text -replace '[\uD800-\uDFFF]', ''
-    $clean = $clean -replace '[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', ''
+    $clean = $Text -replace '[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', ''
 
     return (($clean -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
+}
+
+function Convert-SafeInlineText {
+    param(
+        [string]$Text,
+        [bool]$UseEmojiWords = $false
+    )
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return ''
+    }
+
+    $clean = $Text
+    if ($UseEmojiWords) {
+        $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F37D), ' Meal ')
+        $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F304), ' Sunrise ')
+        $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F4D6), ' Book ')
+        $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F382), ' B-day ')
+    }
+
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F37D), ' ')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F304), ' ')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F4D6), ' ')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F338), ' ')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F382), ' ')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F98B), ' ')
+    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F56F), ' ')
+    $clean = $clean.Replace(([char]0x2615).ToString(), ' ')
+    $clean = $clean.Replace(([char]0x271D).ToString(), ' ')
+    $clean = $clean.Replace(([char]0x27A1).ToString(), ' ')
+    $clean = $clean.Replace(([char]0x2694).ToString(), ' ')
+    $clean = $clean.Replace(([char]0x2026).ToString(), '...')
+    $clean = $clean.Replace(([char]0x2022).ToString(), '-')
+    $clean = $clean.Replace(([char]0x2018).ToString(), "'")
+    $clean = $clean.Replace(([char]0x2019).ToString(), "'")
+    $clean = $clean.Replace(([char]0x201C).ToString(), '"')
+    $clean = $clean.Replace(([char]0x201D).ToString(), '"')
+    $clean = $clean.Replace(([char]0x2013).ToString(), '-')
+    $clean = $clean.Replace(([char]0x2014).ToString(), '-')
+    $clean = $clean -replace '[\u200D\uFE0E\uFE0F]', ''
+    $clean = $clean -replace '[\u2600-\u27BF]', ' '
+    $clean = $clean -replace '[\uD800-\uDFFF]', ''
+
+    return Convert-RainmeterText $clean
 }
 
 function Convert-DisplayText {
@@ -139,25 +182,7 @@ function Convert-DisplayText {
         return ''
     }
 
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F37D), 'Meal')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F304), 'Sunrise')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F4D6), 'Book')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F338), '*')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F382), 'B-day')
-    $clean = $clean.Replace(([char]0x2615).ToString(), '')
-    $clean = $clean.Replace(([char]0x271D).ToString(), ([char]0x2020).ToString())
-    $clean = $clean.Replace(([char]0x27A1).ToString(), '>')
-    $clean = $clean.Replace(([char]0x2694).ToString(), 'x')
-    $clean = $clean.Replace(([char]0xFE0F).ToString(), '')
-    $clean = $clean.Replace(([char]0x2018).ToString(), "'")
-    $clean = $clean.Replace(([char]0x2019).ToString(), "'")
-    $clean = $clean.Replace(([char]0x201C).ToString(), '"')
-    $clean = $clean.Replace(([char]0x201D).ToString(), '"')
-    $clean = $clean.Replace(([char]0x2013).ToString(), '-')
-    $clean = $clean.Replace(([char]0x2014).ToString(), '-')
-    $clean = $clean.Replace(([char]0x2020).ToString(), '+')
-
-    return Convert-RainmeterText $clean
+    return Convert-SafeInlineText -Text $clean -UseEmojiWords:$true
 }
 
 function Get-EventIcon {
@@ -169,11 +194,23 @@ function Get-EventIcon {
 
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F37D))) { return 'MEAL' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F304))) { return 'SUN' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F31F))) { return 'SUN' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F4D6))) { return 'BOOK' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F338))) { return 'LADY' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F382))) { return 'BDAY' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F389))) { return 'BDAY' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F98B))) { return 'BUTTERFLY' }
     if ($Text.Contains([char]::ConvertFromUtf32(0x1F56F))) { return 'CANDLE' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F90D))) { return 'LADY' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F4AA))) { return 'IRON' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F4C5))) { return 'MARKER' }
+    if ($Text.Contains([char]::ConvertFromUtf32(0x1F4C6))) { return 'MARKER' }
+    if ($Text.Contains(([char]0x2728).ToString())) { return 'SUN' }
+    if ($Text.Contains(([char]0x2B50).ToString())) { return 'SUN' }
+    if ($Text.Contains(([char]0x2764).ToString())) { return 'LADY' }
+    if ($Text.Contains(([char]0x2665).ToString())) { return 'LADY' }
+    if ($Text.Contains(([char]0x2705).ToString())) { return 'MARKER' }
+    if ($Text.Contains(([char]0x2714).ToString())) { return 'MARKER' }
     if ($Text.Contains(([char]0x271D).ToString())) { return '+' }
     if ($Text.Contains(([char]0x2694).ToString())) { return 'IRON' }
     if ($Text -match '(?i)\bbible\b') { return 'BOOK' }
@@ -191,26 +228,7 @@ function Convert-TitleText {
         return ''
     }
 
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F37D), '')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F304), '')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F4D6), '')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F338), '')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F382), '')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F98B), '')
-    $clean = $clean.Replace([char]::ConvertFromUtf32(0x1F56F), '')
-    $clean = $clean.Replace(([char]0x2615).ToString(), '')
-    $clean = $clean.Replace(([char]0x271D).ToString(), '')
-    $clean = $clean.Replace(([char]0x27A1).ToString(), '')
-    $clean = $clean.Replace(([char]0x2694).ToString(), '')
-    $clean = $clean.Replace(([char]0xFE0F).ToString(), '')
-    $clean = $clean.Replace(([char]0x2018).ToString(), "'")
-    $clean = $clean.Replace(([char]0x2019).ToString(), "'")
-    $clean = $clean.Replace(([char]0x201C).ToString(), '"')
-    $clean = $clean.Replace(([char]0x201D).ToString(), '"')
-    $clean = $clean.Replace(([char]0x2013).ToString(), '-')
-    $clean = $clean.Replace(([char]0x2014).ToString(), '-')
-
-    return ((Convert-RainmeterText $clean) -replace '^\s*[-|>]+\s*', '')
+    return ((Convert-SafeInlineText -Text $clean) -replace '^\s*[-|>]+\s*', '')
 }
 
 function Convert-HexColorToRainmeter {
@@ -556,6 +574,33 @@ function New-EventObject {
     }
 }
 
+function Expand-DisplayEvent {
+    param(
+        [object]$Event,
+        [datetime]$WindowStart,
+        [datetime]$WindowEnd
+    )
+
+    if (!$Event.AllDay -or $Event.End.Date -le $Event.Start.Date.AddDays(1)) {
+        return @($Event)
+    }
+
+    $expanded = New-Object System.Collections.Generic.List[object]
+    $cursor = $Event.Start.Date
+    $endDate = $Event.End.Date
+
+    while ($cursor -lt $endDate) {
+        $sliceStart = $cursor
+        $sliceEnd = $cursor.AddDays(1)
+        if ($sliceEnd -ge $WindowStart -and $sliceStart -lt $WindowEnd) {
+            $expanded.Add((New-EventObject -Start $sliceStart -End $sliceEnd -Title $Event.Title -Location $Event.Location -Notes $Event.Notes -AllDay:$true -Color $Event.Color -Calendar $Event.Calendar -Icon $Event.Icon))
+        }
+        $cursor = $cursor.AddDays(1)
+    }
+
+    return $expanded.ToArray()
+}
+
 function Get-SampleEvents {
     $now = Get-Date
     $base = Get-Date -Hour $now.Hour -Minute 0 -Second 0
@@ -697,7 +742,9 @@ function Parse-IcsEvents {
 
         if ($hasRecurrenceId) {
             if ($baseEvent.End -ge $WindowStart -and $baseEvent.Start -lt $WindowEnd) {
-                $events.Add($baseEvent)
+                foreach ($event in (Expand-DisplayEvent -Event $baseEvent -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
+                    $events.Add($event)
+                }
             }
             continue
         }
@@ -708,7 +755,9 @@ function Parse-IcsEvents {
         }
 
         foreach ($event in (Expand-IcsEvent -Event $baseEvent -RuleText $current['RRULE'] -ExDates $exDates -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
-            $events.Add($event)
+            foreach ($displayEvent in (Expand-DisplayEvent -Event $event -WindowStart $WindowStart -WindowEnd $WindowEnd)) {
+                $events.Add($displayEvent)
+            }
         }
     }
 
@@ -1003,8 +1052,8 @@ function Write-AgendaCache {
         $lines.Add(("Event{0}Color={1}" -f $n, $color))
     }
 
-    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    [System.IO.File]::WriteAllLines($Path, [string[]]$lines, $utf8NoBom)
+    $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+    [System.IO.File]::WriteAllLines($Path, [string[]]$lines, $utf8Bom)
 }
 
 try {

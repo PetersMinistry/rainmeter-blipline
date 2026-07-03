@@ -1,5 +1,15 @@
 # Blipline Changelog
 
+## 0.3.15 Beta - 2026-07-03
+
+Multi-day all-day event and visual marker cleanup.
+
+### Fixed
+
+- Expands multi-day all-day events into daily display slices so week-long events move through the timeline instead of staying anchored to the first day.
+- Normalizes unsupported inline emoji and symbol markers before Rainmeter display to avoid mojibake such as `ðŸ` or `âœ`.
+- Maps common visual markers such as sparkles, hearts, books, meals, birthdays, candles, and dates to Blipline event badges where possible.
+
 ## 0.3.14 Beta - 2026-07-02
 
 Layout hardening for scaled and localized timelines.

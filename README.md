@@ -10,7 +10,7 @@ It includes current/next event focus, a side countdown, smooth scrolling, multi-
 
 ## Download
 
-Current beta: `v0.3.14-beta.1`
+Current beta: `v0.3.15-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
@@ -33,13 +33,13 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Handles daily, weekly, monthly, and yearly recurring events.
 - Handles edited single instances of recurring events through `RECURRENCE-ID`.
 - Keeps smaller calendars visible with per-calendar cache backfill.
-- Preserves Unicode and emoji-friendly event text as far as Rainmeter allows.
-- Shows crisp event-type badges for common calendar markers such as Bible study, birthdays, meals, church events, flowers, candles, and ministry events.
+- Preserves Unicode calendar text and normalizes unsupported inline emoji before Rainmeter display.
+- Shows crisp event-type badges for common calendar markers such as Bible study, birthdays, meals, church events, flowers, candles, sparkles, hearts, and ministry events.
 - Refreshes every 5 minutes, with a manual Refresh button in settings.
 
 ## Templates
 
-The beta includes six layout templates. They share the same Classic footprint so switching templates does not make the skin jump wider or taller.
+The beta includes seven layout templates. They share the same Classic footprint so switching templates does not make the skin jump wider or taller.
 
 Templates:
 
@@ -96,5 +96,5 @@ Location and notes are read from each calendar event's Location and Description/
 
 ## Status
 
-`v0.3.14-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`v0.3.15-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
 

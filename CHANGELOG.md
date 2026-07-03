@@ -1,5 +1,13 @@
 # Blipline Changelog
 
+## 0.3.16 Beta - 2026-07-03
+
+Settings include hotfix for the 0.3.15 beta release.
+
+### Fixed
+
+- Writes `UserSettings.inc` as UTF-8 without BOM so Rainmeter Settings can parse included variables after refresh/import instead of showing raw `#FeedName#`, `#UiScale#`, and toggle placeholders.
+
 ## 0.3.15 Beta - 2026-07-03
 
 Multi-day all-day event and visual marker cleanup.

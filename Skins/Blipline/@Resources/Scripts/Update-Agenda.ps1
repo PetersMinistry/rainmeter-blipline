@@ -107,8 +107,9 @@ function Save-FeedStatus {
         $lines = @(Set-SettingValue -Lines $lines -Name "Feed${i}Color" -Value $color)
     }
 
-    $utf8Bom = New-Object System.Text.UTF8Encoding($true)
-    [System.IO.File]::WriteAllLines($Path, $lines, $utf8Bom)
+    # Rainmeter @Include files must stay UTF-8 without BOM or variables can render literally.
+    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllLines($Path, $lines, $utf8NoBom)
 }
 
 function Convert-IcsText {

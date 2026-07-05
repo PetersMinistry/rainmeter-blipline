@@ -27,7 +27,7 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Automatically expands scroll cache depth for larger multi-calendar setups.
 - Auto-detects calendar names and iCal feed colors when the feed provides them.
 - Lets you assign feed colors from a 24-color built-in palette when Google does not expose colors.
-- Supports optional 24-hour event times and a custom all-day label through `UserSettings.inc`.
+- Supports Settings-page language and 12-hour/24-hour clock options.
 - Includes event detail toggles for calendar name, location, and notes.
 - Keeps long localized titles/details clipped with ellipsis so scaling does not push rows out of alignment.
 - Handles daily, weekly, monthly, and yearly recurring events.
@@ -81,7 +81,7 @@ Private iCal URLs are secret read-only links. Anyone with one can read that cale
 
 Use Settings > Timeline scale to resize Blipline with minus, plus, `Reset 100%`, or a typed percent value.
 
-Location and notes are read from each calendar event's Location and Description/Notes fields. Enabled details share one clipped timeline detail line, so very long calendar, location, or note text may be shortened with ellipsis. To localize time display, set `TimeFormat=24` and update `AllDayLabel` in `Blipline\@Resources\UserSettings.inc`.
+Location and notes are read from each calendar event's Location and Description/Notes fields. Enabled details share one clipped timeline detail line, so very long calendar, location, or note text may be shortened with ellipsis. Use Settings > Display settings to choose English, Russian, Spanish, Italian, French, or German, and to switch between 12-hour and 24-hour event times.
 
 ## Privacy
 

@@ -1,5 +1,26 @@
 # Blipline Changelog
 
+## 0.3.17 Beta - 2026-07-05
+
+Display options and timeline alignment pass.
+
+### Added
+
+- Adds Settings-page language options for English, Russian, Spanish, Italian, French, and German.
+- Adds Settings-page 12-hour and 24-hour clock buttons backed by the existing `TimeFormat` cache generation.
+- Generates localized timeline labels through the agenda cache so future language additions can be made from the central locale table.
+
+### Fixed
+
+- Reflows the Settings page into a wider two-column panel so the new display controls do not make the window overly tall.
+- Applies language and clock changes through a hidden settings writer so clicks do not flash a terminal window.
+- Re-formats the existing agenda cache immediately for language and clock changes instead of waiting on a calendar feed refresh first.
+- Localizes Settings page labels along with the generated timeline labels when the language changes.
+- Keeps Settings and Timeline in the same language/time format by updating `UserSettings.inc` and `Agenda.inc` together.
+- Localizes countdown tag unit spacing and adds plural day labels plus day/hour split output for long active events.
+- Sanitizes Rainmeter-facing language text to prevent mojibake, removes leaked status variables, and strips HTML tags from event details.
+- Centers event, divider, connector, and active glow circles on the timeline rule using Rainmeter ellipse center/radius geometry.
+
 ## 0.3.16 Beta - 2026-07-03
 
 Settings include hotfix for the 0.3.15 beta release.

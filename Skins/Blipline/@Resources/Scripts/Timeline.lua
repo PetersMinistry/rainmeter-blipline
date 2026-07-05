@@ -34,6 +34,20 @@ local iconImages = {
   CANDLE = 'candle.png'
 }
 local daySeparatorGap = 20
+local timelineText = {
+  noEvents = 'No events',
+  ends = 'ENDS',
+  next = 'NEXT',
+  done = 'DONE',
+  minute = 'min',
+  minuteSuffix = 'm',
+  hour = 'hr',
+  hourSuffix = 'h',
+  day = 'day',
+  dayPlural = 'days',
+  daySuffix = 'd',
+  unitJoiner = ''
+}
 
 local function skin_var(name, fallback)
   local value = SKIN:GetVariable(name)
@@ -51,6 +65,12 @@ end
 
 local function trim(value)
   return (value or ''):gsub('^%s+', ''):gsub('%s+$', '')
+end
+
+local function decode_joiner(value)
+  local clean = trim(value)
+  if clean == 'space' then return ' ' end
+  return clean
 end
 
 local function add_detail_part(parts, enabled, value)
@@ -233,12 +253,33 @@ local function read_cache()
 
   SKIN:Bang('!SetVariable', 'LastUpdated', vars.LastUpdated or 'Not updated')
   SKIN:Bang('!SetVariable', 'SourceStatus', vars.SourceStatus or 'No calendar data')
+  timelineText.noEvents = vars.LabelNoEvents or 'No events'
+  timelineText.ends = vars.LabelCountdownEnds or 'ENDS'
+  timelineText.next = vars.LabelCountdownNext or 'NEXT'
+  timelineText.done = vars.LabelCountdownDone or 'DONE'
+  timelineText.minute = vars.UnitMinute or 'min'
+  timelineText.minuteSuffix = vars.UnitMinuteSuffix or 'm'
+  timelineText.hour = vars.UnitHour or 'hr'
+  timelineText.hourSuffix = vars.UnitHourSuffix or 'h'
+  timelineText.day = vars.UnitDay or 'day'
+  timelineText.dayPlural = vars.UnitDayPlural or 'days'
+  timelineText.daySuffix = vars.UnitDaySuffix or 'd'
+  timelineText.unitJoiner = decode_joiner(vars.UnitJoiner or '')
+end
+
+local function countdown_value(value, unit)
+  return tostring(value) .. timelineText.unitJoiner .. unit
+end
+
+local function plural_unit(value, singular, plural)
+  if tonumber(value) == 1 then return singular end
+  return plural or singular
 end
 
 local function format_countdown(seconds)
   if seconds < 0 then seconds = 0 end
   if seconds < 3600 then
-    return tostring(math.max(1, math.ceil(seconds / 60))), 'min'
+    return tostring(math.max(1, math.ceil(seconds / 60))), timelineText.minute
   end
   if seconds < 86400 then
     local hours = math.floor(seconds / 3600)
@@ -248,11 +289,21 @@ local function format_countdown(seconds)
       minutes = 0
     end
     if minutes == 0 then
-      return tostring(hours), 'hr'
+      return tostring(hours), timelineText.hour
     end
-    return tostring(hours) .. 'h', tostring(minutes) .. 'm'
+    return countdown_value(hours, timelineText.hourSuffix), countdown_value(minutes, timelineText.minuteSuffix)
   end
-  return tostring(math.ceil(seconds / 86400)), 'day'
+  local days = math.floor(seconds / 86400)
+  local hours = math.ceil((seconds % 86400) / 3600)
+  if hours >= 24 then
+    days = days + 1
+    hours = 0
+  end
+  if days < 1 then days = 1 end
+  if hours > 0 then
+    return countdown_value(days, timelineText.daySuffix), countdown_value(hours, timelineText.hourSuffix)
+  end
+  return tostring(days), plural_unit(days, timelineText.day, timelineText.dayPlural)
 end
 
 local function clear_row(slot)
@@ -453,7 +504,7 @@ local function apply_style(force)
   local dividerTextX = tonumber(preset.divTextX) or 356
   local timelineX = tonumber(preset.timelineX) or 232
   preset.divChipX = tostring(round(dividerTextX - (dividerChipW / 2)))
-  preset.divDotX = tostring(round(timelineX - (dividerDotSize / 2)))
+  preset.divDotX = tostring(round(timelineX))
 
   local scaledBaseY = {}
   for index, y in ipairs(preset.baseY) do
@@ -572,18 +623,18 @@ local function apply_style(force)
 end
 
 local function find_selected(now)
-  if #events == 0 then return 0, 'No events', 0 end
+  if #events == 0 then return 0, timelineText.noEvents, 0 end
 
   for i, event in ipairs(events) do
     if now >= event.startEpoch and now < event.endEpoch then
-      return i, 'ENDS', event.endEpoch - now
+      return i, timelineText.ends, event.endEpoch - now
     end
     if now < event.startEpoch then
-      return i, 'NEXT', event.startEpoch - now
+      return i, timelineText.next, event.startEpoch - now
     end
   end
 
-  return #events, 'DONE', 0
+  return #events, timelineText.done, 0
 end
 
 local function refresh_interval_seconds()
@@ -742,9 +793,10 @@ function Update(force)
     local pointerY = clamp(activeY, rowBaseY[1], rowBaseY[maxRows] + (daySeparatorGap * 3))
 
     local headerDate = events[startIndex].date
+    local dotCenterOffset = tonumber(SKIN:GetVariable('RowDotCenterOffsetY') or '') or 9
     SKIN:Bang('!SetVariable', 'HeaderDate', headerDate)
     SKIN:Bang('!SetVariable', 'CountdownY', tostring(math.floor(pointerY - 20 + 0.5)))
-    SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(math.floor(pointerY + 8 + 0.5)))
+    SKIN:Bang('!SetVariable', 'ActiveRuleY', tostring(math.floor(pointerY + dotCenterOffset + 0.5)))
 
     local scrollTop = tonumber(SKIN:GetVariable('ScrollY') or '') or 72
     local scrollHeight = tonumber(SKIN:GetVariable('ScrollH') or '') or 376

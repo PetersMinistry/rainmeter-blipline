@@ -1,6 +1,7 @@
 param(
     [string]$SettingsPath,
-    [string]$OutputPath
+    [string]$OutputPath,
+    [switch]$UseExistingCache
 )
 
 $ErrorActionPreference = 'Stop'
@@ -9,6 +10,127 @@ $ErrorActionPreference = 'Stop'
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072
 } catch {}
+
+$BliplineLocales = [ordered]@{
+    en = @{
+        Name = 'English'; Culture = 'en-US'; AllDay = 'All day'; Untitled = '(Untitled)'
+        NoEvents = 'No events'; Ends = 'ENDS'; Next = 'NEXT'; Done = 'DONE'
+        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'hr'; UnitHourSuffix = 'h'; UnitDay = 'day'; UnitDayPlural = 'days'; UnitDaySuffix = 'd'; UnitJoiner = ''
+        SampleData = 'Sample data'; DemoData = 'Demo data'; NoFeedsConfigured = 'No feeds configured'
+        RefreshFailedSampleData = 'Refresh failed - sample data'
+        UpdatedFeeds = 'Updated {0} feed(s)'; UpdatedFeedsFailed = 'Updated {0} feed(s), {1} failed'; ZeroUpdated = '0 of {0} feed(s) updated'
+    }
+    ru = @{
+        Name = 'Russian'; Culture = 'en-US'; AllDay = 'Ves den'; Untitled = '(Bez nazvaniya)'
+        NoEvents = 'Net sobytiy'; Ends = 'KONETS'; Next = 'DALEE'; Done = 'GOTOVO'
+        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'ch'; UnitHourSuffix = 'ch'; UnitDay = 'den'; UnitDayPlural = 'dney'; UnitDaySuffix = 'd'; UnitJoiner = 'space'
+        SampleData = 'Primer dannyh'; DemoData = 'Demo'; NoFeedsConfigured = 'Lenty ne nastroeny'
+        RefreshFailedSampleData = 'Sboy obnovleniya - primer'
+        UpdatedFeeds = 'Obnovleno: {0}'; UpdatedFeedsFailed = 'Obnovleno: {0}, oshibok: {1}'; ZeroUpdated = 'Obnovleno 0 iz {0}'
+    }
+    es = @{
+        Name = 'Spanish'; Culture = 'es-ES'; AllDay = 'Todo el dia'; Untitled = '(Sin titulo)'
+        NoEvents = 'Sin eventos'; Ends = 'FIN'; Next = 'SIGUE'; Done = 'HECHO'
+        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'dia'; UnitDayPlural = 'dias'; UnitDaySuffix = 'd'; UnitJoiner = 'space'
+        SampleData = 'Datos de ejemplo'; DemoData = 'Demo'; NoFeedsConfigured = 'Sin fuentes'
+        RefreshFailedSampleData = 'Error - datos de ejemplo'
+        UpdatedFeeds = '{0} fuente(s) actualizada(s)'; UpdatedFeedsFailed = '{0} fuente(s) actualizada(s), {1} error'; ZeroUpdated = '0 de {0} fuente(s) actualizada(s)'
+    }
+    it = @{
+        Name = 'Italian'; Culture = 'it-IT'; AllDay = 'Tutto il giorno'; Untitled = '(Senza titolo)'
+        NoEvents = 'Nessun evento'; Ends = 'FINISCE'; Next = 'PROSSIMO'; Done = 'FATTO'
+        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'giorno'; UnitDayPlural = 'giorni'; UnitDaySuffix = 'g'; UnitJoiner = 'space'
+        SampleData = 'Dati di esempio'; DemoData = 'Demo'; NoFeedsConfigured = 'Nessun feed'
+        RefreshFailedSampleData = 'Errore - dati di esempio'
+        UpdatedFeeds = '{0} feed aggiornati'; UpdatedFeedsFailed = '{0} feed aggiornati, {1} errori'; ZeroUpdated = '0 di {0} feed aggiornati'
+    }
+    fr = @{
+        Name = 'French'; Culture = 'fr-FR'; AllDay = 'Toute la journee'; Untitled = '(Sans titre)'
+        NoEvents = 'Aucun evenement'; Ends = 'FIN'; Next = 'SUIVANT'; Done = 'TERMINE'
+        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'jour'; UnitDayPlural = 'jours'; UnitDaySuffix = 'j'; UnitJoiner = 'space'
+        SampleData = 'Donnees de test'; DemoData = 'Demo'; NoFeedsConfigured = 'Aucun flux'
+        RefreshFailedSampleData = 'Echec - donnees de test'
+        UpdatedFeeds = '{0} flux actualise(s)'; UpdatedFeedsFailed = '{0} flux actualise(s), {1} echec(s)'; ZeroUpdated = '0 sur {0} flux actualise(s)'
+    }
+    de = @{
+        Name = 'German'; Culture = 'de-DE'; AllDay = 'Ganztagig'; Untitled = '(Ohne Titel)'
+        NoEvents = 'Keine Ereignisse'; Ends = 'ENDET'; Next = 'NAECHSTES'; Done = 'FERTIG'
+        UnitMinute = 'Min'; UnitMinuteSuffix = 'm'; UnitHour = 'Std'; UnitHourSuffix = 'h'; UnitDay = 'Tag'; UnitDayPlural = 'Tage'; UnitDaySuffix = 'T'; UnitJoiner = 'space'
+        SampleData = 'Beispieldaten'; DemoData = 'Demo'; NoFeedsConfigured = 'Keine Feeds eingerichtet'
+        RefreshFailedSampleData = 'Aktualisierung fehlgeschlagen - Beispiel'
+        UpdatedFeeds = '{0} Feed(s) aktualisiert'; UpdatedFeedsFailed = '{0} Feed(s) aktualisiert, {1} fehlgeschlagen'; ZeroUpdated = '0 von {0} Feed(s) aktualisiert'
+    }
+}
+
+function Get-BliplineLocale {
+    param([string]$Path)
+
+    $code = (Get-SettingValue -Path $Path -Name 'Language' -Default 'en').Trim().ToLowerInvariant()
+    $aliases = @{
+        english = 'en'; russian = 'ru'; spanish = 'es'; italian = 'it'; french = 'fr'; german = 'de'
+    }
+    if ($aliases.ContainsKey($code)) {
+        $code = $aliases[$code]
+    }
+    if (!$BliplineLocales.Contains($code)) {
+        $code = 'en'
+    }
+
+    $locale = @{} + $BliplineLocales[$code]
+    $locale['Code'] = $code
+    return $locale
+}
+
+function Get-LocaleText {
+    param(
+        [hashtable]$Locale,
+        [string]$Key
+    )
+
+    if ($Locale.ContainsKey($Key)) {
+        return [string]$Locale[$Key]
+    }
+
+    return [string]$BliplineLocales['en'][$Key]
+}
+
+function Convert-StatusText {
+    param(
+        [string]$Status,
+        [hashtable]$Locale
+    )
+
+    if ($Status -eq 'Sample data') { return Get-LocaleText -Locale $Locale -Key 'SampleData' }
+    if ($Status -eq 'Demo data') { return Get-LocaleText -Locale $Locale -Key 'DemoData' }
+    if ($Status -eq 'No feeds configured') { return Get-LocaleText -Locale $Locale -Key 'NoFeedsConfigured' }
+    if ($Status -eq 'Refresh failed - sample data') { return Get-LocaleText -Locale $Locale -Key 'RefreshFailedSampleData' }
+    if ($Status -match '^Updated (\d+) feed\(s\), (\d+) failed$') {
+        return (Get-LocaleText -Locale $Locale -Key 'UpdatedFeedsFailed') -f [int]$matches[1], [int]$matches[2]
+    }
+    if ($Status -match '^Updated (\d+) feed\(s\)$') {
+        return (Get-LocaleText -Locale $Locale -Key 'UpdatedFeeds') -f [int]$matches[1]
+    }
+    if ($Status -match '^0 of (\d+) feed\(s\) updated$') {
+        return (Get-LocaleText -Locale $Locale -Key 'ZeroUpdated') -f [int]$matches[1]
+    }
+
+    return Convert-DisplayText $Status
+}
+
+function Format-LocalizedDateLabel {
+    param(
+        [DateTime]$Date,
+        [hashtable]$Locale
+    )
+
+    try {
+        $culture = [Globalization.CultureInfo]::GetCultureInfo([string]$Locale['Culture'])
+        return (Convert-RainmeterText ($Date.ToString('ddd  dd MMM', $culture).ToUpper($culture)))
+    }
+    catch {
+        return $Date.ToString('ddd  dd MMM').ToUpperInvariant()
+    }
+}
 
 
 function Get-SettingValue {
@@ -119,6 +241,30 @@ function Convert-IcsText {
     return $Text.Replace('\n', ' ').Replace('\N', ' ').Replace('\,', ',').Replace('\;', ';').Replace('\\', '\').Trim()
 }
 
+function Remove-RainmeterUnsafeUnicode {
+    param([string]$Text)
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return ''
+    }
+
+    $clean = $Text.Replace(([char]0x00DF).ToString(), 'ss')
+    $clean = $clean.Replace(([char]0x00E6).ToString(), 'ae')
+    $clean = $clean.Replace(([char]0x00C6).ToString(), 'AE')
+    $clean = $clean.Replace(([char]0x0153).ToString(), 'oe')
+    $clean = $clean.Replace(([char]0x0152).ToString(), 'OE')
+    $clean = $clean.Replace(([char]0x00F8).ToString(), 'o')
+    $clean = $clean.Replace(([char]0x00D8).ToString(), 'O')
+    $normalized = $clean.Normalize([Text.NormalizationForm]::FormD)
+    $builder = New-Object System.Text.StringBuilder
+    foreach ($char in $normalized.ToCharArray()) {
+        if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($char) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
+            [void]$builder.Append($char)
+        }
+    }
+
+    return ($builder.ToString().Normalize([Text.NormalizationForm]::FormC) -replace '[^\x09\x20-\x7E]', '')
+}
+
 function Convert-RainmeterText {
     param([string]$Text)
 
@@ -127,6 +273,7 @@ function Convert-RainmeterText {
     }
 
     $clean = $Text -replace '[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]', ''
+    $clean = Remove-RainmeterUnsafeUnicode $clean
 
     return (($clean -replace '\s+', ' ').Trim() -replace '[\r\n=]', ' ')
 }
@@ -182,6 +329,8 @@ function Convert-DisplayText {
     if ([string]::IsNullOrWhiteSpace($clean)) {
         return ''
     }
+    $clean = [System.Net.WebUtility]::HtmlDecode($clean)
+    $clean = $clean -replace '<[^>]+>', ' '
 
     return Convert-SafeInlineText -Text $clean -UseEmojiWords:$true
 }
@@ -228,6 +377,8 @@ function Convert-TitleText {
     if ([string]::IsNullOrWhiteSpace($clean)) {
         return ''
     }
+    $clean = [System.Net.WebUtility]::HtmlDecode($clean)
+    $clean = $clean -replace '<[^>]+>', ' '
 
     return ((Convert-SafeInlineText -Text $clean) -replace '^\s*[-|>]+\s*', '')
 }
@@ -928,6 +1079,57 @@ function Test-AgendaCacheExists {
     return $false
 }
 
+function Read-AgendaCache {
+    param([string]$Path)
+
+    $vars = @{}
+    foreach ($line in Get-Content -LiteralPath $Path) {
+        if ($line -match '^([^=]+)=(.*)$') {
+            $vars[$matches[1]] = $matches[2]
+        }
+    }
+
+    function Get-CacheValue {
+        param(
+            [hashtable]$Vars,
+            [string]$Name,
+            [string]$Default = ''
+        )
+
+        if ($Vars.ContainsKey($Name)) {
+            return [string]$Vars[$Name]
+        }
+
+        return $Default
+    }
+
+    $events = @()
+    $count = [int](Get-CacheValue -Vars $vars -Name 'EventCount' -Default '0')
+    for ($i = 1; $i -le $count; $i++) {
+        $startEpoch = [int64](Get-CacheValue -Vars $vars -Name "Event${i}StartEpoch" -Default '0')
+        $endEpoch = [int64](Get-CacheValue -Vars $vars -Name "Event${i}EndEpoch" -Default '0')
+        if ($startEpoch -le 0 -or $endEpoch -le 0) {
+            continue
+        }
+
+        $events += New-EventObject `
+            -Start ([DateTimeOffset]::FromUnixTimeSeconds($startEpoch).LocalDateTime) `
+            -End ([DateTimeOffset]::FromUnixTimeSeconds($endEpoch).LocalDateTime) `
+            -Title (Get-CacheValue -Vars $vars -Name "Event${i}Title") `
+            -Location (Get-CacheValue -Vars $vars -Name "Event${i}Location") `
+            -Notes (Get-CacheValue -Vars $vars -Name "Event${i}Notes") `
+            -AllDay ((Get-CacheValue -Vars $vars -Name "Event${i}AllDay" -Default '0') -eq '1') `
+            -Color (Get-CacheValue -Vars $vars -Name "Event${i}Color" -Default '205,214,224,230') `
+            -Calendar (Get-CacheValue -Vars $vars -Name "Event${i}Calendar") `
+            -Icon (Get-CacheValue -Vars $vars -Name "Event${i}Icon")
+    }
+
+    return @{
+        Events = $events
+        Status = (Get-CacheValue -Vars $vars -Name 'SourceStatus')
+    }
+}
+
 function Write-AgendaCache {
     param(
         [object[]]$Events,
@@ -1008,17 +1210,38 @@ function Write-AgendaCache {
             Select-Object -First $effectiveCacheLimit
     )
 
+    $locale = Get-BliplineLocale -Path $SettingsPath
     $timeFormatSetting = (Get-SettingValue -Path $SettingsPath -Name 'TimeFormat' -Default '12').Trim()
     $timePattern = if ($timeFormatSetting -match '(?i)^(24|24h|hh:mm|h24|true|1)$') { 'HH:mm' } else { 'h:mm tt' }
-    $allDayLabel = Convert-DisplayText (Get-SettingValue -Path $SettingsPath -Name 'AllDayLabel' -Default 'All day')
-    if ([string]::IsNullOrWhiteSpace($allDayLabel)) {
-        $allDayLabel = 'All day'
+    $allDayDefault = Get-LocaleText -Locale $locale -Key 'AllDay'
+    $allDaySetting = Get-SettingValue -Path $SettingsPath -Name 'AllDayLabel' -Default ''
+    if ([string]::IsNullOrWhiteSpace($allDaySetting) -or ($locale['Code'] -ne 'en' -and $allDaySetting -eq 'All day')) {
+        $allDaySetting = $allDayDefault
     }
+    $allDayLabel = Convert-DisplayText $allDaySetting
+    if ([string]::IsNullOrWhiteSpace($allDayLabel)) {
+        $allDayLabel = $allDayDefault
+    }
+    $untitledLabel = Get-LocaleText -Locale $locale -Key 'Untitled'
 
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add('[Variables]')
+    $lines.Add(('LocaleCode={0}' -f $locale['Code']))
+    $lines.Add(('LocaleName={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'Name'))))
+    $lines.Add(('LabelNoEvents={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'NoEvents'))))
+    $lines.Add(('LabelCountdownEnds={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'Ends'))))
+    $lines.Add(('LabelCountdownNext={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'Next'))))
+    $lines.Add(('LabelCountdownDone={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'Done'))))
+    $lines.Add(('UnitMinute={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'UnitMinute'))))
+    $lines.Add(('UnitMinuteSuffix={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'UnitMinuteSuffix'))))
+    $lines.Add(('UnitHour={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'UnitHour'))))
+    $lines.Add(('UnitHourSuffix={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'UnitHourSuffix'))))
+    $lines.Add(('UnitDay={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'UnitDay'))))
+    $lines.Add(('UnitDayPlural={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'UnitDayPlural'))))
+    $lines.Add(('UnitDaySuffix={0}' -f (Convert-RainmeterText (Get-LocaleText -Locale $locale -Key 'UnitDaySuffix'))))
+    $lines.Add(('UnitJoiner={0}' -f (Get-LocaleText -Locale $locale -Key 'UnitJoiner')))
     $lines.Add(('LastUpdated={0}' -f (Get-Date -Format $timePattern)))
-    $lines.Add(('SourceStatus={0}' -f $Status))
+    $lines.Add(('SourceStatus={0}' -f (Convert-StatusText -Status $Status -Locale $locale)))
     $lines.Add(('EventCount={0}' -f $filtered.Count))
 
     $colors = @('205,214,224,230', '255,199,50,255', '104,170,255,245', '126,220,117,245', '238,120,150,245')
@@ -1028,7 +1251,7 @@ function Write-AgendaCache {
         $color = if ($event.Color) { $event.Color } else { $colors[$i % $colors.Count] }
         $time = if ($event.AllDay) { $allDayLabel } else { $event.Start.ToString($timePattern) }
         $endTime = if ($event.AllDay) { '' } else { $event.End.ToString($timePattern) }
-        $dateLabel = $event.Start.ToString('ddd  dd MMM').ToUpperInvariant()
+        $dateLabel = Format-LocalizedDateLabel -Date $event.Start -Locale $locale
         $icon = if ($event.Icon) { $event.Icon } else { Get-EventIcon $event.Title }
         $title = Convert-TitleText $event.Title
         $location = Convert-DisplayText $event.Location
@@ -1036,7 +1259,7 @@ function Write-AgendaCache {
         $calendar = Convert-DisplayText $event.Calendar
 
         if ([string]::IsNullOrWhiteSpace($title)) {
-            $title = '(Untitled)'
+            $title = $untitledLabel
         }
 
         $lines.Add(("Event{0}Title={1}" -f $n, $title))
@@ -1058,6 +1281,20 @@ function Write-AgendaCache {
 }
 
 try {
+    if ($UseExistingCache -and (Test-AgendaCacheExists -Path $OutputPath)) {
+        $cache = Read-AgendaCache -Path $OutputPath
+        $status = Get-SettingValue -Path $SettingsPath -Name 'FeedStatusSummary' -Default ''
+        if ([string]::IsNullOrWhiteSpace($status)) {
+            $status = $cache.Status
+        }
+        if ([string]::IsNullOrWhiteSpace($status)) {
+            $status = 'Updated 0 feed(s)'
+        }
+
+        Write-AgendaCache -Events $cache.Events -Path $OutputPath -Status $status
+        return
+    }
+
     $useSample = Get-SettingValue -Path $SettingsPath -Name 'UseSample' -Default '0'
     $maxStatusFeeds = [int](Get-SettingValue -Path $SettingsPath -Name 'CalendarSlots' -Default '8')
     $maxStatusFeeds = [Math]::Max(3, [Math]::Min(15, $maxStatusFeeds))

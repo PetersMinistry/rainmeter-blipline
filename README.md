@@ -10,7 +10,7 @@ It includes current/next event focus, a side countdown, smooth scrolling, multi-
 
 ## Download
 
-Current beta: `v0.3.17-beta.1`
+Current beta: `v0.3.18-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
@@ -20,10 +20,11 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Keeps a side countdown tag visible so the next thing is always obvious.
 - Scrolls through cached past and future events with the mouse wheel.
 - Clicks the countdown tag to glide back to the current or next event.
-- Uses a wider two-column Settings panel for feed import, display options, color selection, event details, scale, and template controls.
+- Uses a wider two-column Settings panel for display options, color selection, event details, scale, refresh interval, and template controls.
 - Resizes from the Settings panel with minus, plus, `Reset 100%`, and custom percent entry.
-- Imports multiple Google Calendar private iCal URLs from the clipboard, one per line.
+- Adds one or many Google Calendar private iCal URLs from the Calendar Import panel without replacing existing calendars.
 - Supports up to fifteen iCal feed slots.
+- Lets you remove individual calendars from the Calendar Import panel.
 - Merges multiple calendars into one readable agenda.
 - Automatically expands scroll cache depth for larger multi-calendar setups.
 - Auto-detects calendar names and iCal feed colors when the feed provides them.
@@ -40,7 +41,7 @@ Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMini
 - Keeps smaller calendars visible with per-calendar cache backfill.
 - Preserves Unicode calendar text and normalizes unsupported inline emoji before Rainmeter display.
 - Shows crisp event-type badges for common calendar markers such as Bible study, birthdays, meals, church events, flowers, candles, sparkles, hearts, and ministry events.
-- Refreshes every 5 minutes, with a manual Refresh button in settings.
+- Refreshes every 5 minutes by default, with Settings buttons for 1, 5, 10, or 15 minutes and a manual Refresh button.
 
 ## Templates
 
@@ -80,11 +81,13 @@ The beta package opens the settings panel first so new users can import feeds, p
 
 ## Google Calendar Setup
 
-In Google Calendar, copy each calendar private iCal URL. In Blipline settings, place each URL on its own clipboard line, then click Import Clipboard.
+In Google Calendar, copy each calendar's Secret address in iCal format. In Blipline settings, click Add Calendars to open the Calendar Import panel, then copy one iCal link or several links to the clipboard and click Add iCal Link(s).
+
+Adding links is additive: existing calendars stay in place, duplicate links are skipped, and new links fill the next open feed slots. Use the Remove buttons in the Calendar Import panel to remove individual calendars.
 
 Private iCal URLs are secret read-only links. Anyone with one can read that calendar feed, so do not post them publicly.
 
-Use Settings > Timeline scale to resize Blipline with minus, plus, `Reset 100%`, or a typed percent value.
+Use Settings > Timeline scale to resize Blipline with minus, plus, `Reset 100%`, or a typed percent value. Use Settings > Refresh interval to choose how often Blipline checks calendar feeds.
 
 Location and notes are read from each calendar event's Location and Description/Notes fields. Enabled details share one clipped timeline detail line, so very long calendar, location, or note text may be shortened with ellipsis.
 
@@ -103,5 +106,5 @@ Use Settings > Display settings to choose English, Russian, Spanish, Italian, Fr
 
 ## Status
 
-`v0.3.17-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`v0.3.18-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
 

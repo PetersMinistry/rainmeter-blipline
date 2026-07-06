@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$SettingsPath,
     [string]$OutputPath,
     [string]$Name,
@@ -8,6 +8,21 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Get-RainmeterIncludeEncoding {
+    try {
+        [System.Text.Encoding]::RegisterProvider([System.Text.CodePagesEncodingProvider]::Instance)
+    } catch {}
+
+    try {
+        $ansiCodePage = [System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ANSICodePage
+        if ($ansiCodePage -gt 0) {
+            return [System.Text.Encoding]::GetEncoding($ansiCodePage)
+        }
+    } catch {}
+
+    return [System.Text.Encoding]::Default
+}
 
 function Set-IncValue {
     param(
@@ -68,22 +83,17 @@ function Remove-RainmeterUnsafeUnicode {
         return ''
     }
 
-    $clean = $Text.Replace(([char]0x00DF).ToString(), 'ss')
-    $clean = $clean.Replace(([char]0x00E6).ToString(), 'ae')
-    $clean = $clean.Replace(([char]0x00C6).ToString(), 'AE')
-    $clean = $clean.Replace(([char]0x0153).ToString(), 'oe')
-    $clean = $clean.Replace(([char]0x0152).ToString(), 'OE')
-    $clean = $clean.Replace(([char]0x00F8).ToString(), 'o')
-    $clean = $clean.Replace(([char]0x00D8).ToString(), 'O')
-    $normalized = $clean.Normalize([Text.NormalizationForm]::FormD)
     $builder = New-Object System.Text.StringBuilder
-    foreach ($char in $normalized.ToCharArray()) {
-        if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($char) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
+    foreach ($char in $Text.ToCharArray()) {
+        $category = [Globalization.CharUnicodeInfo]::GetUnicodeCategory($char)
+        if ($category -ne [Globalization.UnicodeCategory]::Control -and
+            $category -ne [Globalization.UnicodeCategory]::Surrogate -and
+            $char -ne [char]0xFFFD) {
             [void]$builder.Append($char)
         }
     }
 
-    return ($builder.ToString().Normalize([Text.NormalizationForm]::FormC) -replace '[^\x09\x20-\x7E]', '')
+    return $builder.ToString().Normalize([Text.NormalizationForm]::FormC)
 }
 
 function Convert-SettingsLabel {
@@ -104,6 +114,19 @@ function Get-SettingsLabels {
             UiImportClipboard = 'Import Clipboard'
             UiResetFeeds = 'Reset Feeds'
             UiImportHelp = 'Copy private iCal URLs one per line, then import them together. Reset clears saved feed URLs and returns to demo data.'
+            UiImportHelp1 = 'Copy private iCal URLs one per line, then import them together.'
+            UiImportHelp2 = 'Reset clears saved feed URLs and returns to demo data.'
+            UiAddCalendars = 'Add Calendars'
+            UiCalendarImportTitle = 'Add Calendars'
+            UiCalendarImportHelp1 = 'Copy the Secret address in iCal format from Google Calendar.'
+            UiCalendarImportHelp2 = 'You can copy one link or several links, one per line.'
+            UiAddIcalLinks = 'Add iCal Link(s)'
+            UiConnectedCalendars = 'Connected calendars'
+            UiRemove = 'Remove'
+            UiClearAllCalendars = 'Clear All'
+            UiConfirmClear = 'Confirm Clear'
+            UiOpenGoogleCalendar = 'Open Google Calendar'
+            UiBackSettings = 'Settings'
             UiDetectedCalendars = 'Detected calendars'
             UiFeedPalette = 'Feed color palette (24)'
             UiSelectedFeed = 'Selected feed'
@@ -124,6 +147,11 @@ function Get-SettingsLabels {
             UiNotes = 'Notes'
             UiTimelineScale = 'Timeline scale'
             UiResetScale = 'Reset 100%'
+            UiRefreshInterval = 'Refresh interval'
+            UiRefresh1 = '1 min'
+            UiRefresh5 = '5 min'
+            UiRefresh10 = '10 min'
+            UiRefresh15 = '15 min'
             UiLayoutTemplate = 'Layout template'
             UiTemplateClassic = 'Classic'
             UiTemplateCommand = 'Command'
@@ -145,6 +173,19 @@ function Get-SettingsLabels {
             UiImportClipboard = 'Import iz bufera'
             UiResetFeeds = 'Sbrosit lenty'
             UiImportHelp = 'Skopiruyte lichnye iCal URL po odnomu v stroke i importiruyte ih vmeste. Sbros ochischaet lenty i vklyuchaet demo.'
+            UiImportHelp1 = 'Skopiruyte lichnye iCal URL po odnomu v stroke.'
+            UiImportHelp2 = 'Importiruyte ih vmeste. Sbros vklyuchaet demo.'
+            UiAddCalendars = 'Dobavit kalendari'
+            UiCalendarImportTitle = 'Dobavit kalendari'
+            UiCalendarImportHelp1 = 'Skopiruyte sekretniy iCal-adres iz Google Calendar.'
+            UiCalendarImportHelp2 = 'Mozhno skopirovat odnu ssylku ili neskolko, po odnoi v stroke.'
+            UiAddIcalLinks = 'Dobavit iCal ssylki'
+            UiConnectedCalendars = 'Podklyuchennye kalendari'
+            UiRemove = 'Udalit'
+            UiClearAllCalendars = 'Ochistit vse'
+            UiConfirmClear = 'Podtverdit'
+            UiOpenGoogleCalendar = 'Otkryt Google Calendar'
+            UiBackSettings = 'Nastroyki'
             UiDetectedCalendars = 'Naydennye kalendari'
             UiFeedPalette = 'Palitra lent (24)'
             UiSelectedFeed = 'Vybrana lenta'
@@ -165,6 +206,11 @@ function Get-SettingsLabels {
             UiNotes = 'Zametki'
             UiTimelineScale = 'Masshtab'
             UiResetScale = 'Sbros 100%'
+            UiRefreshInterval = 'Interval obnovleniya'
+            UiRefresh1 = '1 min'
+            UiRefresh5 = '5 min'
+            UiRefresh10 = '10 min'
+            UiRefresh15 = '15 min'
             UiLayoutTemplate = 'Shablon'
             UiTemplateClassic = 'Classic'
             UiTemplateCommand = 'Command'
@@ -186,6 +232,19 @@ function Get-SettingsLabels {
             UiImportClipboard = 'Importar portapapeles'
             UiResetFeeds = 'Restablecer fuentes'
             UiImportHelp = 'Copia las URLs privadas de iCal, una por línea, e impórtalas juntas. Restablecer borra las fuentes guardadas y vuelve a la demo.'
+            UiImportHelp1 = 'Copia las URLs privadas de iCal, una por línea.'
+            UiImportHelp2 = 'Impórtalas juntas. Restablecer vuelve a la demo.'
+            UiAddCalendars = 'Añadir calendarios'
+            UiCalendarImportTitle = 'Añadir calendarios'
+            UiCalendarImportHelp1 = 'Copia la dirección secreta en formato iCal desde Google Calendar.'
+            UiCalendarImportHelp2 = 'Puedes copiar un enlace o varios, uno por línea.'
+            UiAddIcalLinks = 'Añadir enlace(s) iCal'
+            UiConnectedCalendars = 'Calendarios conectados'
+            UiRemove = 'Quitar'
+            UiClearAllCalendars = 'Borrar todo'
+            UiConfirmClear = 'Confirmar borrado'
+            UiOpenGoogleCalendar = 'Abrir Google Calendar'
+            UiBackSettings = 'Ajustes'
             UiDetectedCalendars = 'Calendarios detectados'
             UiFeedPalette = 'Paleta de fuentes (24)'
             UiSelectedFeed = 'Fuente seleccionada'
@@ -206,6 +265,11 @@ function Get-SettingsLabels {
             UiNotes = 'Notas'
             UiTimelineScale = 'Escala'
             UiResetScale = 'Restablecer 100%'
+            UiRefreshInterval = 'Intervalo de actualización'
+            UiRefresh1 = '1 min'
+            UiRefresh5 = '5 min'
+            UiRefresh10 = '10 min'
+            UiRefresh15 = '15 min'
             UiLayoutTemplate = 'Plantilla'
             UiTemplateClassic = 'Classic'
             UiTemplateCommand = 'Command'
@@ -227,6 +291,19 @@ function Get-SettingsLabels {
             UiImportClipboard = 'Importa appunti'
             UiResetFeeds = 'Reimposta feed'
             UiImportHelp = 'Copia gli URL iCal privati, uno per riga, poi importali insieme. Reimposta cancella i feed salvati e torna alla demo.'
+            UiImportHelp1 = 'Copia gli URL iCal privati, uno per riga.'
+            UiImportHelp2 = 'Importali insieme. Reimposta torna alla demo.'
+            UiAddCalendars = 'Aggiungi calendari'
+            UiCalendarImportTitle = 'Aggiungi calendari'
+            UiCalendarImportHelp1 = 'Copia l''indirizzo segreto in formato iCal da Google Calendar.'
+            UiCalendarImportHelp2 = 'Puoi copiare uno o più link, uno per riga.'
+            UiAddIcalLinks = 'Aggiungi link iCal'
+            UiConnectedCalendars = 'Calendari collegati'
+            UiRemove = 'Rimuovi'
+            UiClearAllCalendars = 'Cancella tutto'
+            UiConfirmClear = 'Conferma'
+            UiOpenGoogleCalendar = 'Apri Google Calendar'
+            UiBackSettings = 'Impostazioni'
             UiDetectedCalendars = 'Calendari rilevati'
             UiFeedPalette = 'Palette feed (24)'
             UiSelectedFeed = 'Feed selezionato'
@@ -247,6 +324,11 @@ function Get-SettingsLabels {
             UiNotes = 'Note'
             UiTimelineScale = 'Scala'
             UiResetScale = 'Ripristina 100%'
+            UiRefreshInterval = 'Intervallo aggiornamento'
+            UiRefresh1 = '1 min'
+            UiRefresh5 = '5 min'
+            UiRefresh10 = '10 min'
+            UiRefresh15 = '15 min'
             UiLayoutTemplate = 'Modello'
             UiTemplateClassic = 'Classic'
             UiTemplateCommand = 'Command'
@@ -268,6 +350,19 @@ function Get-SettingsLabels {
             UiImportClipboard = 'Importer le presse-papiers'
             UiResetFeeds = 'Réinitialiser les flux'
             UiImportHelp = 'Copiez les URL iCal privées, une par ligne, puis importez-les ensemble. Réinitialiser efface les flux et revient à la démo.'
+            UiImportHelp1 = 'Copiez les URL iCal privées, une par ligne.'
+            UiImportHelp2 = 'Importez-les ensemble. Réinitialiser revient à la démo.'
+            UiAddCalendars = 'Ajouter des calendriers'
+            UiCalendarImportTitle = 'Ajouter des calendriers'
+            UiCalendarImportHelp1 = 'Copiez l''adresse secrète au format iCal depuis Google Calendar.'
+            UiCalendarImportHelp2 = 'Vous pouvez copier un lien ou plusieurs, un par ligne.'
+            UiAddIcalLinks = 'Ajouter lien(s) iCal'
+            UiConnectedCalendars = 'Calendriers connectés'
+            UiRemove = 'Supprimer'
+            UiClearAllCalendars = 'Tout effacer'
+            UiConfirmClear = 'Confirmer'
+            UiOpenGoogleCalendar = 'Ouvrir Google Calendar'
+            UiBackSettings = 'Paramètres'
             UiDetectedCalendars = 'Calendriers détectés'
             UiFeedPalette = 'Palette des flux (24)'
             UiSelectedFeed = 'Flux sélectionné'
@@ -288,6 +383,11 @@ function Get-SettingsLabels {
             UiNotes = 'Notes'
             UiTimelineScale = 'Échelle'
             UiResetScale = 'Réinit. 100%'
+            UiRefreshInterval = 'Intervalle d''actualisation'
+            UiRefresh1 = '1 min'
+            UiRefresh5 = '5 min'
+            UiRefresh10 = '10 min'
+            UiRefresh15 = '15 min'
             UiLayoutTemplate = 'Modèle'
             UiTemplateClassic = 'Classic'
             UiTemplateCommand = 'Command'
@@ -297,7 +397,7 @@ function Get-SettingsLabels {
             UiTemplateDaylight = 'Daylight'
             UiTemplatePhantom = 'Phantom'
             UiSyncStatus = 'État de synchro'
-            UiStatusText = 'Blipline s''actualise automatiquement. Utilisez Actualiser apres modification des flux.'
+            UiStatusText = 'Blipline s''actualise automatiquement. Utilisez Actualiser après modification des flux.'
             UiPrivacyNote = 'Cliquez un point de flux et choisissez une couleur. Daylight est clair. Phantom est transparent.'
         }
         de = @{
@@ -309,6 +409,19 @@ function Get-SettingsLabels {
             UiImportClipboard = 'Zwischenablage importieren'
             UiResetFeeds = 'Feeds zurücksetzen'
             UiImportHelp = 'Private iCal-URLs je eine pro Zeile kopieren und gemeinsam importieren. Zurücksetzen löscht gespeicherte Feeds und zeigt Demo-Daten.'
+            UiImportHelp1 = 'Private iCal-URLs je eine pro Zeile kopieren.'
+            UiImportHelp2 = 'Gemeinsam importieren. Zurücksetzen zeigt Demo-Daten.'
+            UiAddCalendars = 'Kalender hinzufügen'
+            UiCalendarImportTitle = 'Kalender hinzufügen'
+            UiCalendarImportHelp1 = 'Geheime Adresse im iCal-Format aus Google Calendar kopieren.'
+            UiCalendarImportHelp2 = 'Ein Link oder mehrere Links, je einer pro Zeile.'
+            UiAddIcalLinks = 'iCal-Link(s) hinzufügen'
+            UiConnectedCalendars = 'Verbundene Kalender'
+            UiRemove = 'Entfernen'
+            UiClearAllCalendars = 'Alle löschen'
+            UiConfirmClear = 'Bestätigen'
+            UiOpenGoogleCalendar = 'Google Calendar öffnen'
+            UiBackSettings = 'Einstellungen'
             UiDetectedCalendars = 'Erkannte Kalender'
             UiFeedPalette = 'Feed-Farbpalette (24)'
             UiSelectedFeed = 'Gewählter Feed'
@@ -329,6 +442,11 @@ function Get-SettingsLabels {
             UiNotes = 'Notizen'
             UiTimelineScale = 'Skalierung'
             UiResetScale = '100% zurück'
+            UiRefreshInterval = 'Aktualisierungsintervall'
+            UiRefresh1 = '1 Min.'
+            UiRefresh5 = '5 Min.'
+            UiRefresh10 = '10 Min.'
+            UiRefresh15 = '15 Min.'
             UiLayoutTemplate = 'Vorlage'
             UiTemplateClassic = 'Classic'
             UiTemplateCommand = 'Command'
@@ -356,7 +474,8 @@ if ([string]::IsNullOrWhiteSpace($SettingsPath) -or !(Test-Path -LiteralPath $Se
 
 $nameClean = $Name.Trim()
 $valueClean = $Value.Trim()
-$lines = @(Get-Content -LiteralPath $SettingsPath)
+$settingsEncoding = Get-RainmeterIncludeEncoding
+$lines = @([System.IO.File]::ReadAllLines($SettingsPath, $settingsEncoding))
 
 if ($nameClean -eq 'Language') {
     $allowed = @('en', 'ru', 'es', 'it', 'fr', 'de')
@@ -376,12 +495,23 @@ elseif ($nameClean -eq 'TimeFormat') {
     $format = if ($valueClean -match '^(24|24h|hh:mm|h24|true|1)$') { '24' } else { '12' }
     $lines = @(Set-IncValue -Lines $lines -Name 'TimeFormat' -Value $format)
 }
+elseif ($nameClean -eq 'RefreshSeconds') {
+    $seconds = 300
+    $parsedSeconds = 0
+    if ([int]::TryParse($valueClean, [ref]$parsedSeconds)) {
+        $seconds = [Math]::Min([Math]::Max($parsedSeconds, 60), 3600)
+    }
+    $ticks = [Math]::Max(1, [int]($seconds * 20))
+    $minutes = [Math]::Round($seconds / 60, 2)
+    $lines = @(Set-IncValue -Lines $lines -Name 'RefreshMinutes' -Value $minutes)
+    $lines = @(Set-IncValue -Lines $lines -Name 'RefreshSeconds' -Value $seconds)
+    $lines = @(Set-IncValue -Lines $lines -Name 'RefreshTicks' -Value $ticks)
+}
 else {
     exit 1
 }
 
-$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-[System.IO.File]::WriteAllLines($SettingsPath, [string[]]$lines, $utf8NoBom)
+[System.IO.File]::WriteAllLines($SettingsPath, [string[]]$lines, $settingsEncoding)
 
 $agendaScript = Join-Path $PSScriptRoot 'Update-Agenda.ps1'
 if (![string]::IsNullOrWhiteSpace($OutputPath) -and (Test-Path -LiteralPath $agendaScript)) {

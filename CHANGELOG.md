@@ -1,5 +1,25 @@
 # Blipline Changelog
 
+## 0.3.18 Beta - 2026-07-06
+
+Calendar import management and localization hardening.
+
+### Added
+
+- Adds a dedicated Calendar Import panel opened from Settings.
+- Adds iCal links additively so importing new links no longer replaces existing calendars.
+- Adds per-calendar Remove buttons plus a two-step Clear All flow for feed management.
+- Adds Settings-page refresh interval buttons for 1, 5, 10, and 15 minute refresh checks.
+- Adds localized Calendar Import panel labels for the existing English, Russian, Spanish, Italian, French, and German language options.
+
+### Fixed
+
+- Fixes Spanish, French, and German Settings labels rendering as mojibake such as `LÃ­nea`, `AÃ±adir`, and `EspaÃ±ol`.
+- Keeps `UserSettings.inc` BOM-free for Rainmeter parsing while preserving accented Settings labels when language, import, or refresh actions rewrite the file.
+- Splits the import help copy into two lines so localized instructions with accents fit the Settings panel cleanly.
+- Keeps the Calendar Import panel synchronized with the selected language after changing Settings language.
+- Skips duplicate iCal URLs and keeps existing feeds in place when adding additional calendars.
+
 ## 0.3.17 Beta - 2026-07-05
 
 Display options and timeline alignment pass.

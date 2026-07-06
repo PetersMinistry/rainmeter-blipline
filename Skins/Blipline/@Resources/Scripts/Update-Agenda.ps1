@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$SettingsPath,
     [string]$OutputPath,
     [switch]$UseExistingCache
@@ -10,6 +10,21 @@ $ErrorActionPreference = 'Stop'
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072
 } catch {}
+
+function Get-RainmeterIncludeEncoding {
+    try {
+        [System.Text.Encoding]::RegisterProvider([System.Text.CodePagesEncodingProvider]::Instance)
+    } catch {}
+
+    try {
+        $ansiCodePage = [System.Globalization.CultureInfo]::CurrentCulture.TextInfo.ANSICodePage
+        if ($ansiCodePage -gt 0) {
+            return [System.Text.Encoding]::GetEncoding($ansiCodePage)
+        }
+    } catch {}
+
+    return [System.Text.Encoding]::Default
+}
 
 $BliplineLocales = [ordered]@{
     en = @{
@@ -29,9 +44,9 @@ $BliplineLocales = [ordered]@{
         UpdatedFeeds = 'Obnovleno: {0}'; UpdatedFeedsFailed = 'Obnovleno: {0}, oshibok: {1}'; ZeroUpdated = 'Obnovleno 0 iz {0}'
     }
     es = @{
-        Name = 'Spanish'; Culture = 'es-ES'; AllDay = 'Todo el dia'; Untitled = '(Sin titulo)'
+        Name = 'Spanish'; Culture = 'es-ES'; AllDay = 'Todo el día'; Untitled = '(Sin título)'
         NoEvents = 'Sin eventos'; Ends = 'FIN'; Next = 'SIGUE'; Done = 'HECHO'
-        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'dia'; UnitDayPlural = 'dias'; UnitDaySuffix = 'd'; UnitJoiner = 'space'
+        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'día'; UnitDayPlural = 'días'; UnitDaySuffix = 'd'; UnitJoiner = 'space'
         SampleData = 'Datos de ejemplo'; DemoData = 'Demo'; NoFeedsConfigured = 'Sin fuentes'
         RefreshFailedSampleData = 'Error - datos de ejemplo'
         UpdatedFeeds = '{0} fuente(s) actualizada(s)'; UpdatedFeedsFailed = '{0} fuente(s) actualizada(s), {1} error'; ZeroUpdated = '0 de {0} fuente(s) actualizada(s)'
@@ -45,16 +60,16 @@ $BliplineLocales = [ordered]@{
         UpdatedFeeds = '{0} feed aggiornati'; UpdatedFeedsFailed = '{0} feed aggiornati, {1} errori'; ZeroUpdated = '0 di {0} feed aggiornati'
     }
     fr = @{
-        Name = 'French'; Culture = 'fr-FR'; AllDay = 'Toute la journee'; Untitled = '(Sans titre)'
-        NoEvents = 'Aucun evenement'; Ends = 'FIN'; Next = 'SUIVANT'; Done = 'TERMINE'
+        Name = 'French'; Culture = 'fr-FR'; AllDay = 'Toute la journée'; Untitled = '(Sans titre)'
+        NoEvents = 'Aucun événement'; Ends = 'FIN'; Next = 'SUIVANT'; Done = 'TERMINÉ'
         UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'jour'; UnitDayPlural = 'jours'; UnitDaySuffix = 'j'; UnitJoiner = 'space'
-        SampleData = 'Donnees de test'; DemoData = 'Demo'; NoFeedsConfigured = 'Aucun flux'
-        RefreshFailedSampleData = 'Echec - donnees de test'
-        UpdatedFeeds = '{0} flux actualise(s)'; UpdatedFeedsFailed = '{0} flux actualise(s), {1} echec(s)'; ZeroUpdated = '0 sur {0} flux actualise(s)'
+        SampleData = 'Données de test'; DemoData = 'Démo'; NoFeedsConfigured = 'Aucun flux'
+        RefreshFailedSampleData = 'Échec - données de test'
+        UpdatedFeeds = '{0} flux actualisé(s)'; UpdatedFeedsFailed = '{0} flux actualisé(s), {1} échec(s)'; ZeroUpdated = '0 sur {0} flux actualisé(s)'
     }
     de = @{
-        Name = 'German'; Culture = 'de-DE'; AllDay = 'Ganztagig'; Untitled = '(Ohne Titel)'
-        NoEvents = 'Keine Ereignisse'; Ends = 'ENDET'; Next = 'NAECHSTES'; Done = 'FERTIG'
+        Name = 'German'; Culture = 'de-DE'; AllDay = 'Ganztägig'; Untitled = '(Ohne Titel)'
+        NoEvents = 'Keine Ereignisse'; Ends = 'ENDET'; Next = 'NÄCHSTES'; Done = 'FERTIG'
         UnitMinute = 'Min'; UnitMinuteSuffix = 'm'; UnitHour = 'Std'; UnitHourSuffix = 'h'; UnitDay = 'Tag'; UnitDayPlural = 'Tage'; UnitDaySuffix = 'T'; UnitJoiner = 'space'
         SampleData = 'Beispieldaten'; DemoData = 'Demo'; NoFeedsConfigured = 'Keine Feeds eingerichtet'
         RefreshFailedSampleData = 'Aktualisierung fehlgeschlagen - Beispiel'
@@ -145,7 +160,8 @@ function Get-SettingValue {
     }
 
     $pattern = '^\s*' + [regex]::Escape($Name) + '\s*=\s*(.*)$'
-    foreach ($line in Get-Content -LiteralPath $Path) {
+    $settingsEncoding = Get-RainmeterIncludeEncoding
+    foreach ($line in [System.IO.File]::ReadAllLines($Path, $settingsEncoding)) {
         if ($line -match $pattern) {
             return $matches[1].Trim()
         }
@@ -206,7 +222,8 @@ function Save-FeedStatus {
         return
     }
 
-    $lines = @(Get-Content -LiteralPath $Path)
+    $settingsEncoding = Get-RainmeterIncludeEncoding
+    $lines = @([System.IO.File]::ReadAllLines($Path, $settingsEncoding))
     $lines = @(Set-SettingValue -Lines $lines -Name 'FeedStatusSummary' -Value (($Summary -replace '[\r\n=]', ' ').Trim()))
 
     for ($i = 1; $i -le $MaxFeeds; $i++) {
@@ -229,9 +246,8 @@ function Save-FeedStatus {
         $lines = @(Set-SettingValue -Lines $lines -Name "Feed${i}Color" -Value $color)
     }
 
-    # Rainmeter @Include files must stay UTF-8 without BOM or variables can render literally.
-    $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-    [System.IO.File]::WriteAllLines($Path, $lines, $utf8NoBom)
+    # Rainmeter @Include files must stay BOM-free or variables can render literally.
+    [System.IO.File]::WriteAllLines($Path, $lines, $settingsEncoding)
 }
 
 function Convert-IcsText {
@@ -247,22 +263,17 @@ function Remove-RainmeterUnsafeUnicode {
         return ''
     }
 
-    $clean = $Text.Replace(([char]0x00DF).ToString(), 'ss')
-    $clean = $clean.Replace(([char]0x00E6).ToString(), 'ae')
-    $clean = $clean.Replace(([char]0x00C6).ToString(), 'AE')
-    $clean = $clean.Replace(([char]0x0153).ToString(), 'oe')
-    $clean = $clean.Replace(([char]0x0152).ToString(), 'OE')
-    $clean = $clean.Replace(([char]0x00F8).ToString(), 'o')
-    $clean = $clean.Replace(([char]0x00D8).ToString(), 'O')
-    $normalized = $clean.Normalize([Text.NormalizationForm]::FormD)
     $builder = New-Object System.Text.StringBuilder
-    foreach ($char in $normalized.ToCharArray()) {
-        if ([Globalization.CharUnicodeInfo]::GetUnicodeCategory($char) -ne [Globalization.UnicodeCategory]::NonSpacingMark) {
+    foreach ($char in $Text.ToCharArray()) {
+        $category = [Globalization.CharUnicodeInfo]::GetUnicodeCategory($char)
+        if ($category -ne [Globalization.UnicodeCategory]::Control -and
+            $category -ne [Globalization.UnicodeCategory]::Surrogate -and
+            $char -ne [char]0xFFFD) {
             [void]$builder.Append($char)
         }
     }
 
-    return ($builder.ToString().Normalize([Text.NormalizationForm]::FormC) -replace '[^\x09\x20-\x7E]', '')
+    return $builder.ToString().Normalize([Text.NormalizationForm]::FormC)
 }
 
 function Convert-RainmeterText {

@@ -41,6 +41,7 @@ RefreshMinutes=5
 RefreshSeconds=300
 RefreshTicks=6000
 Language=en
+LanguageIndex=1
 LanguageLabel=English
 UiSubtitle=Google Calendar / iCal agenda timeline
 UiRefresh=Refresh

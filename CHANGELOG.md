@@ -1,5 +1,17 @@
 # Blipline Changelog
 
+## 0.3.19 Beta - 2026-07-06
+
+Countdown focus and localization review fixes.
+
+### Fixed
+
+- Keeps all-day and long-running events visible in the timeline while preventing them from taking over the left countdown tag when a real scheduled timed event is coming up.
+- Treats midnight-start, day-length calendar items as background for countdown focus so the tag can point to the next meaningful appointment instead of stopping at midnight.
+- Localizes Calendar Import status messages such as empty clipboard, invalid Google Calendar page links, duplicates, full slots, removed feeds, and added feed counts.
+- Shows the selected language with the same orange active state used by the other Settings buttons.
+- Carries the selected language index through Settings writes so language highlighting stays synchronized after refreshes.
+
 ## 0.3.18 Beta - 2026-07-06
 
 Calendar import management and localization hardening.

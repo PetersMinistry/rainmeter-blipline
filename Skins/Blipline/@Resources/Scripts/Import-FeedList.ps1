@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory = $true)]
     [string]$SettingsPath,
 
@@ -93,6 +93,234 @@ function Set-IncValue {
     return @($updated[0..($insertAt - 1)]) + @($replacement) + @($updated[$insertAt..($updated.Count - 1)])
 }
 
+function Get-LanguageCode {
+    param([string[]]$Lines)
+
+    $code = (Get-IncValue -Lines $Lines -Name 'Language' -Default 'en').Trim().ToLowerInvariant()
+    $aliases = @{
+        english = 'en'; russian = 'ru'; spanish = 'es'; italian = 'it'; french = 'fr'; german = 'de'
+    }
+    if ($aliases.ContainsKey($code)) {
+        $code = $aliases[$code]
+    }
+    if ($code -notin @('en', 'ru', 'es', 'it', 'fr', 'de')) {
+        $code = 'en'
+    }
+    return $code
+}
+
+function Get-ImportLabels {
+    param([string]$Code)
+
+    $labels = @{
+        en = @{
+            InvalidGeneric = 'This does not look like an iCal feed link.'
+            GooglePage = 'This looks like a Google Calendar page. Copy the Secret address in iCal format instead.'
+            UrlNotIcal = 'This URL does not look like an iCal feed. Copy the Secret address in iCal format.'
+            ClearPrompt = 'Click Clear All again to confirm.'
+            ClearPromptSummary = 'Clear all needs confirmation'
+            Cleared = 'Cleared all calendars at {0}'
+            ClearedSummary = 'Calendars cleared'
+            NoSlotSelected = 'No calendar slot was selected for removal.'
+            NoCalendarsRemoved = 'No calendars removed'
+            Removed = 'Removed calendar slot(s) {0} at {1}'
+            RemovedSummary = 'Removed slot(s) {0}'
+            ClipboardEmpty = 'Clipboard is empty. Copy one or more iCal links first.'
+            NoIcalFound = 'No iCal links found'
+            NoUsable = 'No usable iCal links were found.'
+            PendingName = 'Feed {0} pending refresh'
+            Pending = 'Pending'
+            AddedPart = 'Added {0} calendar(s)'
+            SkippedDuplicates = 'skipped {0} duplicate(s)'
+            SkippedInvalid = 'skipped {0} non-iCal link(s)'
+            DidNotFit = '{0} did not fit'
+            AddedAt = '{0} at {1}'
+            DuplicateOnly = 'No new calendars were added; duplicate link(s) skipped.'
+            SlotsFull = 'All 15 calendar slots are full. Remove one before adding another.'
+            NoNew = 'No new calendars were added.'
+            SummaryAdded = 'Added {0}; refresh pending'
+            SummaryNoAdded = 'No calendars added'
+            SummaryDuplicates = 'duplicates {0}'
+            SummaryInvalid = 'invalid {0}'
+            SummaryFull = 'full {0}'
+        }
+        ru = @{
+            InvalidGeneric = 'Eto ne pohozhe na ssylku iCal.'
+            GooglePage = 'Eto stranitsa Google Calendar. Skopiruyte sekretniy adres v formate iCal.'
+            UrlNotIcal = 'URL ne pohozh na iCal-lentu. Skopiruyte sekretniy adres iCal.'
+            ClearPrompt = 'Nazhmite Ochistit vse eshche raz dlya podtverzhdeniya.'
+            ClearPromptSummary = 'Ochistka trebuet podtverzhdeniya'
+            Cleared = 'Vse kalendari ochischeny v {0}'
+            ClearedSummary = 'Kalendari ochischeny'
+            NoSlotSelected = 'Ne vybran slot kalendarya dlya udaleniya.'
+            NoCalendarsRemoved = 'Kalendari ne udaleni'
+            Removed = 'Udaleni sloty kalendarya {0} v {1}'
+            RemovedSummary = 'Udaleni sloty {0}'
+            ClipboardEmpty = 'Bufer pust. Skopiruyte odnu ili neskolko ssylok iCal.'
+            NoIcalFound = 'Ssylki iCal ne naydeny'
+            NoUsable = 'Podhodyaschie ssylki iCal ne naydeny.'
+            PendingName = 'Lenta {0} zhdet obnovleniya'
+            Pending = 'Ozhidaet'
+            AddedPart = 'Dobavleno kalendarey: {0}'
+            SkippedDuplicates = 'propuscheno dublikatov: {0}'
+            SkippedInvalid = 'propuscheno ne-iCal ssylok: {0}'
+            DidNotFit = 'ne pomestilos: {0}'
+            AddedAt = '{0} v {1}'
+            DuplicateOnly = 'Novye kalendari ne dobavleny; dublikaty propuscheny.'
+            SlotsFull = 'Vse 15 slotov zanyaty. Udalite odin pered dobavleniem.'
+            NoNew = 'Novye kalendari ne dobavleny.'
+            SummaryAdded = 'Dobavleno {0}; nuzhno obnovit'
+            SummaryNoAdded = 'Kalendari ne dobavleny'
+            SummaryDuplicates = 'dublikatov {0}'
+            SummaryInvalid = 'nevernyh {0}'
+            SummaryFull = 'net mesta {0}'
+        }
+        es = @{
+            InvalidGeneric = 'Esto no parece un enlace de fuente iCal.'
+            GooglePage = 'Esto parece una página de Google Calendar. Copia la dirección secreta en formato iCal.'
+            UrlNotIcal = 'Esta URL no parece una fuente iCal. Copia la dirección secreta en formato iCal.'
+            ClearPrompt = 'Haz clic en Borrar todo otra vez para confirmar.'
+            ClearPromptSummary = 'Borrar todo requiere confirmación'
+            Cleared = 'Todos los calendarios se borraron a las {0}'
+            ClearedSummary = 'Calendarios borrados'
+            NoSlotSelected = 'No se seleccionó ningún calendario para quitar.'
+            NoCalendarsRemoved = 'No se quitaron calendarios'
+            Removed = 'Calendario(s) {0} quitado(s) a las {1}'
+            RemovedSummary = 'Quitado(s) {0}'
+            ClipboardEmpty = 'El portapapeles está vacío. Copia uno o más enlaces iCal primero.'
+            NoIcalFound = 'No se encontraron enlaces iCal'
+            NoUsable = 'No se encontraron enlaces iCal válidos.'
+            PendingName = 'Fuente {0} pendiente de actualización'
+            Pending = 'Pendiente'
+            AddedPart = '{0} calendario(s) añadido(s)'
+            SkippedDuplicates = '{0} duplicado(s) omitido(s)'
+            SkippedInvalid = '{0} enlace(s) no iCal omitido(s)'
+            DidNotFit = '{0} no cupieron'
+            AddedAt = '{0} a las {1}'
+            DuplicateOnly = 'No se añadieron calendarios nuevos; se omitieron enlaces duplicados.'
+            SlotsFull = 'Los 15 espacios de calendario están llenos. Quita uno antes de añadir otro.'
+            NoNew = 'No se añadieron calendarios nuevos.'
+            SummaryAdded = 'Añadidos {0}; actualización pendiente'
+            SummaryNoAdded = 'No se añadieron calendarios'
+            SummaryDuplicates = 'duplicados {0}'
+            SummaryInvalid = 'inválidos {0}'
+            SummaryFull = 'llenos {0}'
+        }
+        it = @{
+            InvalidGeneric = 'Questo non sembra un link feed iCal.'
+            GooglePage = 'Sembra una pagina di Google Calendar. Copia l''indirizzo segreto in formato iCal.'
+            UrlNotIcal = 'Questo URL non sembra un feed iCal. Copia l''indirizzo segreto in formato iCal.'
+            ClearPrompt = 'Fai clic di nuovo su Cancella tutto per confermare.'
+            ClearPromptSummary = 'Cancella tutto richiede conferma'
+            Cleared = 'Tutti i calendari sono stati cancellati alle {0}'
+            ClearedSummary = 'Calendari cancellati'
+            NoSlotSelected = 'Nessun calendario selezionato per la rimozione.'
+            NoCalendarsRemoved = 'Nessun calendario rimosso'
+            Removed = 'Calendario/i {0} rimosso/i alle {1}'
+            RemovedSummary = 'Rimosso/i {0}'
+            ClipboardEmpty = 'Gli appunti sono vuoti. Copia prima uno o più link iCal.'
+            NoIcalFound = 'Nessun link iCal trovato'
+            NoUsable = 'Nessun link iCal utilizzabile trovato.'
+            PendingName = 'Feed {0} in attesa di aggiornamento'
+            Pending = 'In attesa'
+            AddedPart = '{0} calendario/i aggiunto/i'
+            SkippedDuplicates = '{0} duplicato/i saltato/i'
+            SkippedInvalid = '{0} link non iCal saltato/i'
+            DidNotFit = '{0} non inserito/i'
+            AddedAt = '{0} alle {1}'
+            DuplicateOnly = 'Nessun nuovo calendario aggiunto; link duplicati saltati.'
+            SlotsFull = 'Tutti i 15 slot calendario sono pieni. Rimuovine uno prima di aggiungerne un altro.'
+            NoNew = 'Nessun nuovo calendario aggiunto.'
+            SummaryAdded = 'Aggiunti {0}; aggiornamento in sospeso'
+            SummaryNoAdded = 'Nessun calendario aggiunto'
+            SummaryDuplicates = 'duplicati {0}'
+            SummaryInvalid = 'non validi {0}'
+            SummaryFull = 'pieni {0}'
+        }
+        fr = @{
+            InvalidGeneric = 'Cela ne ressemble pas à un lien de flux iCal.'
+            GooglePage = 'Cela ressemble à une page Google Calendar. Copiez plutôt l''adresse secrète au format iCal.'
+            UrlNotIcal = 'Cette URL ne ressemble pas à un flux iCal. Copiez l''adresse secrète au format iCal.'
+            ClearPrompt = 'Cliquez encore sur Tout effacer pour confirmer.'
+            ClearPromptSummary = 'Tout effacer demande confirmation'
+            Cleared = 'Tous les calendriers ont été effacés à {0}'
+            ClearedSummary = 'Calendriers effacés'
+            NoSlotSelected = 'Aucun calendrier n''a été sélectionné pour suppression.'
+            NoCalendarsRemoved = 'Aucun calendrier supprimé'
+            Removed = 'Calendrier(s) {0} supprimé(s) à {1}'
+            RemovedSummary = 'Supprimé(s) {0}'
+            ClipboardEmpty = 'Le presse-papiers est vide. Copiez d''abord un ou plusieurs liens iCal.'
+            NoIcalFound = 'Aucun lien iCal trouvé'
+            NoUsable = 'Aucun lien iCal utilisable trouvé.'
+            PendingName = 'Flux {0} en attente d''actualisation'
+            Pending = 'En attente'
+            AddedPart = '{0} calendrier(s) ajouté(s)'
+            SkippedDuplicates = '{0} doublon(s) ignoré(s)'
+            SkippedInvalid = '{0} lien(s) non iCal ignoré(s)'
+            DidNotFit = '{0} sans place'
+            AddedAt = '{0} à {1}'
+            DuplicateOnly = 'Aucun nouveau calendrier ajouté ; les doublons ont été ignorés.'
+            SlotsFull = 'Les 15 emplacements de calendrier sont pleins. Supprimez-en un avant d''en ajouter un autre.'
+            NoNew = 'Aucun nouveau calendrier ajouté.'
+            SummaryAdded = '{0} ajouté(s) ; actualisation en attente'
+            SummaryNoAdded = 'Aucun calendrier ajouté'
+            SummaryDuplicates = 'doublons {0}'
+            SummaryInvalid = 'non valides {0}'
+            SummaryFull = 'pleins {0}'
+        }
+        de = @{
+            InvalidGeneric = 'Das sieht nicht wie ein iCal-Feed-Link aus.'
+            GooglePage = 'Das sieht wie eine Google-Calendar-Seite aus. Kopieren Sie die geheime Adresse im iCal-Format.'
+            UrlNotIcal = 'Diese URL sieht nicht wie ein iCal-Feed aus. Kopieren Sie die geheime Adresse im iCal-Format.'
+            ClearPrompt = 'Klicken Sie erneut auf Alles löschen, um zu bestätigen.'
+            ClearPromptSummary = 'Alles löschen erfordert Bestätigung'
+            Cleared = 'Alle Kalender wurden um {0} gelöscht'
+            ClearedSummary = 'Kalender gelöscht'
+            NoSlotSelected = 'Es wurde kein Kalender zum Entfernen ausgewählt.'
+            NoCalendarsRemoved = 'Keine Kalender entfernt'
+            Removed = 'Kalender-Slot(s) {0} um {1} entfernt'
+            RemovedSummary = 'Slot(s) {0} entfernt'
+            ClipboardEmpty = 'Die Zwischenablage ist leer. Kopieren Sie zuerst einen oder mehrere iCal-Links.'
+            NoIcalFound = 'Keine iCal-Links gefunden'
+            NoUsable = 'Keine verwendbaren iCal-Links gefunden.'
+            PendingName = 'Feed {0} wartet auf Aktualisierung'
+            Pending = 'Ausstehend'
+            AddedPart = '{0} Kalender hinzugefügt'
+            SkippedDuplicates = '{0} Duplikat(e) übersprungen'
+            SkippedInvalid = '{0} Nicht-iCal-Link(s) übersprungen'
+            DidNotFit = '{0} ohne Platz'
+            AddedAt = '{0} um {1}'
+            DuplicateOnly = 'Keine neuen Kalender hinzugefügt; doppelte Links wurden übersprungen.'
+            SlotsFull = 'Alle 15 Kalenderplätze sind voll. Entfernen Sie einen, bevor Sie einen weiteren hinzufügen.'
+            NoNew = 'Keine neuen Kalender hinzugefügt.'
+            SummaryAdded = '{0} hinzugefügt; Aktualisierung ausstehend'
+            SummaryNoAdded = 'Keine Kalender hinzugefügt'
+            SummaryDuplicates = 'Duplikate {0}'
+            SummaryInvalid = 'ungültig {0}'
+            SummaryFull = 'voll {0}'
+        }
+    }
+
+    if (!$labels.ContainsKey($Code)) {
+        return $labels.en
+    }
+    return $labels[$Code]
+}
+
+function Format-ImportText {
+    param(
+        [hashtable]$Labels,
+        [string]$Key,
+        [object[]]$FormatArgs = @()
+    )
+
+    $template = if ($Labels.ContainsKey($Key)) { $Labels[$Key] } else { $Key }
+    if ($FormatArgs.Count -gt 0) {
+        return ($template -f $FormatArgs)
+    }
+    return $template
+}
+
 function Get-FeedUrlKey {
     param([int]$Slot)
     if ($Slot -eq 1) {
@@ -121,7 +349,7 @@ function Test-FeedUrlShape {
 
     $result = @{
         IsUsable = $false
-        Message = 'This does not look like an iCal feed link.'
+        MessageKey = 'InvalidGeneric'
     }
 
     if ([string]::IsNullOrWhiteSpace($Url)) {
@@ -142,17 +370,17 @@ function Test-FeedUrlShape {
     $path = $uri.AbsolutePath.ToLowerInvariant()
 
     if ($uriHost -match '(^|\.)calendar\.google\.com$' -and $path -notmatch '/calendar/ical/') {
-        $result.Message = 'This looks like a Google Calendar page. Copy the Secret address in iCal format instead.'
+        $result.MessageKey = 'GooglePage'
         return $result
     }
 
     if ($full -match '\.ics($|[?#])' -or $path -match '/ical/' -or $path -match '/ics/' -or $full -match 'ical') {
         $result.IsUsable = $true
-        $result.Message = ''
+        $result.MessageKey = ''
         return $result
     }
 
-    $result.Message = 'This URL does not look like an iCal feed. Copy the Secret address in iCal format.'
+    $result.MessageKey = 'UrlNotIcal'
     return $result
 }
 
@@ -259,12 +487,14 @@ if (!(Test-Path -LiteralPath $resolvedPath)) {
 $max = [Math]::Max(1, [Math]::Min(15, $MaxFeeds))
 $settingsEncoding = Get-RainmeterIncludeEncoding
 $lines = @([System.IO.File]::ReadAllLines($resolvedPath, $settingsEncoding))
+$languageCode = Get-LanguageCode -Lines $lines
+$importLabels = Get-ImportLabels -Code $languageCode
 
 if ($Mode -eq 'Clear') {
     if (!$ConfirmClear) {
-        $lines = @(Set-Status -Lines $lines -ImportStatus 'Click Clear All again to confirm.' -Summary 'Clear all needs confirmation')
+        $lines = @(Set-Status -Lines $lines -ImportStatus (Format-ImportText -Labels $importLabels -Key 'ClearPrompt') -Summary (Format-ImportText -Labels $importLabels -Key 'ClearPromptSummary'))
         [System.IO.File]::WriteAllLines($resolvedPath, $lines, $settingsEncoding)
-        Write-Host 'Clear all needs confirmation.'
+        Write-Host (Format-ImportText -Labels $importLabels -Key 'ClearPromptSummary')
         exit 0
     }
 
@@ -274,16 +504,16 @@ if ($Mode -eq 'Clear') {
 
     $lines = @(Set-IncValue -Lines $lines -Name 'UseSample' -Value '1')
     $lines = @(Set-IncValue -Lines $lines -Name 'CalendarSlots' -Value ([string]$max))
-    $lines = @(Set-Status -Lines $lines -ImportStatus ('Cleared all calendars at ' + (Get-Date -Format 'h:mm tt')) -Summary 'Calendars cleared')
+    $lines = @(Set-Status -Lines $lines -ImportStatus (Format-ImportText -Labels $importLabels -Key 'Cleared' -FormatArgs @((Get-Date -Format 'h:mm tt'))) -Summary (Format-ImportText -Labels $importLabels -Key 'ClearedSummary'))
     [System.IO.File]::WriteAllLines($resolvedPath, $lines, $settingsEncoding)
-    Write-Host ("Cleared feed URLs in {0}" -f $resolvedPath)
+    Write-Host (Format-ImportText -Labels $importLabels -Key 'ClearedSummary')
     exit 0
 }
 
 if ($Mode -eq 'Remove') {
     $validSlots = @($Slots | Where-Object { $_ -ge 1 -and $_ -le $max } | Select-Object -Unique)
     if ($validSlots.Count -eq 0) {
-        $lines = @(Set-Status -Lines $lines -ImportStatus 'No calendar slot was selected for removal.' -Summary 'No calendars removed')
+        $lines = @(Set-Status -Lines $lines -ImportStatus (Format-ImportText -Labels $importLabels -Key 'NoSlotSelected') -Summary (Format-ImportText -Labels $importLabels -Key 'NoCalendarsRemoved'))
     }
     else {
         foreach ($slot in $validSlots) {
@@ -293,11 +523,11 @@ if ($Mode -eq 'Remove') {
         $remainingCount = @($remainingFeeds.Values | Where-Object { ![string]::IsNullOrWhiteSpace([string]$_) }).Count
         $lines = @(Set-IncValue -Lines $lines -Name 'UseSample' -Value $(if ($remainingCount -gt 0) { '0' } else { '1' }))
         $slotText = ($validSlots -join ', ')
-        $lines = @(Set-Status -Lines $lines -ImportStatus ("Removed calendar slot(s) $slotText at " + (Get-Date -Format 'h:mm tt')) -Summary ("Removed slot(s) $slotText"))
+        $lines = @(Set-Status -Lines $lines -ImportStatus (Format-ImportText -Labels $importLabels -Key 'Removed' -FormatArgs @($slotText, (Get-Date -Format 'h:mm tt'))) -Summary (Format-ImportText -Labels $importLabels -Key 'RemovedSummary' -FormatArgs @($slotText)))
     }
 
     [System.IO.File]::WriteAllLines($resolvedPath, $lines, $settingsEncoding)
-    Write-Host 'Remove complete.'
+    Write-Host (Get-IncValue -Lines $lines -Name 'FeedImportStatus' -Default (Format-ImportText -Labels $importLabels -Key 'NoCalendarsRemoved'))
     exit 0
 }
 
@@ -307,9 +537,9 @@ if ([string]::IsNullOrWhiteSpace($raw)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($raw)) {
-    $lines = @(Set-Status -Lines $lines -ImportStatus 'Clipboard is empty. Copy one or more iCal links first.' -Summary 'No iCal links found')
+    $lines = @(Set-Status -Lines $lines -ImportStatus (Format-ImportText -Labels $importLabels -Key 'ClipboardEmpty') -Summary (Format-ImportText -Labels $importLabels -Key 'NoIcalFound'))
     [System.IO.File]::WriteAllLines($resolvedPath, $lines, $settingsEncoding)
-    Write-Host 'Clipboard is empty.'
+    Write-Host (Format-ImportText -Labels $importLabels -Key 'ClipboardEmpty')
     exit 0
 }
 
@@ -322,9 +552,9 @@ $candidates = @(
 )
 
 if ($candidates.Count -eq 0) {
-    $lines = @(Set-Status -Lines $lines -ImportStatus 'No usable iCal links were found.' -Summary 'No iCal links found')
+    $lines = @(Set-Status -Lines $lines -ImportStatus (Format-ImportText -Labels $importLabels -Key 'NoUsable') -Summary (Format-ImportText -Labels $importLabels -Key 'NoIcalFound'))
     [System.IO.File]::WriteAllLines($resolvedPath, $lines, $settingsEncoding)
-    Write-Host 'No usable feed lines.'
+    Write-Host (Format-ImportText -Labels $importLabels -Key 'NoUsable')
     exit 0
 }
 
@@ -359,7 +589,7 @@ foreach ($candidate in $candidates) {
     if (!$shape.IsUsable) {
         $invalid++
         if ([string]::IsNullOrWhiteSpace($firstInvalidMessage)) {
-            $firstInvalidMessage = $shape.Message
+            $firstInvalidMessage = Format-ImportText -Labels $importLabels -Key $shape.MessageKey
         }
         continue
     }
@@ -382,8 +612,8 @@ foreach ($candidate in $candidates) {
         $lines = @(Set-IncValue -Lines $lines -Name "CalendarColor$slot" -Value $color)
     }
 
-    $lines = @(Set-IncValue -Lines $lines -Name "Feed${slot}Name" -Value "Feed $slot pending refresh")
-    $lines = @(Set-IncValue -Lines $lines -Name "Feed${slot}Result" -Value 'Pending')
+    $lines = @(Set-IncValue -Lines $lines -Name "Feed${slot}Name" -Value (Format-ImportText -Labels $importLabels -Key 'PendingName' -FormatArgs @($slot)))
+    $lines = @(Set-IncValue -Lines $lines -Name "Feed${slot}Result" -Value (Format-ImportText -Labels $importLabels -Key 'Pending'))
     $lines = @(Set-IncValue -Lines $lines -Name "Feed${slot}Count" -Value '')
     $lines = @(Set-IncValue -Lines $lines -Name "Feed${slot}Color" -Value $color)
     $added++
@@ -391,10 +621,10 @@ foreach ($candidate in $candidates) {
 
 $parts = New-Object System.Collections.Generic.List[string]
 if ($added -gt 0) {
-    [void]$parts.Add("Added $added calendar(s)")
-    if ($duplicates -gt 0) { [void]$parts.Add("skipped $duplicates duplicate(s)") }
-    if ($invalid -gt 0) { [void]$parts.Add("skipped $invalid non-iCal link(s)") }
-    if ($notFit -gt 0) { [void]$parts.Add("$notFit did not fit") }
+    [void]$parts.Add((Format-ImportText -Labels $importLabels -Key 'AddedPart' -FormatArgs @($added)))
+    if ($duplicates -gt 0) { [void]$parts.Add((Format-ImportText -Labels $importLabels -Key 'SkippedDuplicates' -FormatArgs @($duplicates))) }
+    if ($invalid -gt 0) { [void]$parts.Add((Format-ImportText -Labels $importLabels -Key 'SkippedInvalid' -FormatArgs @($invalid))) }
+    if ($notFit -gt 0) { [void]$parts.Add((Format-ImportText -Labels $importLabels -Key 'DidNotFit' -FormatArgs @($notFit))) }
 }
 
 if ($added -eq 0) {
@@ -402,27 +632,27 @@ if ($added -eq 0) {
         $status = $firstInvalidMessage
     }
     elseif ($duplicates -gt 0) {
-        $status = 'No new calendars were added; duplicate link(s) skipped.'
+        $status = Format-ImportText -Labels $importLabels -Key 'DuplicateOnly'
     }
     elseif ($emptySlots.Count -le 0) {
-        $status = 'All 15 calendar slots are full. Remove one before adding another.'
+        $status = Format-ImportText -Labels $importLabels -Key 'SlotsFull'
     }
     else {
-        $status = 'No new calendars were added.'
+        $status = Format-ImportText -Labels $importLabels -Key 'NoNew'
     }
 }
 else {
-    $status = (($parts -join '; ') + ' at ' + (Get-Date -Format 'h:mm tt'))
+    $status = Format-ImportText -Labels $importLabels -Key 'AddedAt' -FormatArgs @(($parts -join '; '), (Get-Date -Format 'h:mm tt'))
 }
 
 if ($added -gt 0) {
     $lines = @(Set-IncValue -Lines $lines -Name 'UseSample' -Value '0')
 }
 $lines = @(Set-IncValue -Lines $lines -Name 'CalendarSlots' -Value ([string]$max))
-$summary = if ($added -gt 0) { "Added $added; refresh pending" } else { 'No calendars added' }
-if ($duplicates -gt 0) { $summary += "; duplicates $duplicates" }
-if ($invalid -gt 0) { $summary += "; invalid $invalid" }
-if ($notFit -gt 0) { $summary += "; full $notFit" }
+$summary = if ($added -gt 0) { Format-ImportText -Labels $importLabels -Key 'SummaryAdded' -FormatArgs @($added) } else { Format-ImportText -Labels $importLabels -Key 'SummaryNoAdded' }
+if ($duplicates -gt 0) { $summary += '; ' + (Format-ImportText -Labels $importLabels -Key 'SummaryDuplicates' -FormatArgs @($duplicates)) }
+if ($invalid -gt 0) { $summary += '; ' + (Format-ImportText -Labels $importLabels -Key 'SummaryInvalid' -FormatArgs @($invalid)) }
+if ($notFit -gt 0) { $summary += '; ' + (Format-ImportText -Labels $importLabels -Key 'SummaryFull' -FormatArgs @($notFit)) }
 $lines = @(Set-Status -Lines $lines -ImportStatus $status -Summary $summary)
 
 [System.IO.File]::WriteAllLines($resolvedPath, $lines, $settingsEncoding)

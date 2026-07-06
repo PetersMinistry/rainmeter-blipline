@@ -77,6 +77,20 @@ function Get-LanguageLabel {
     }
 }
 
+function Get-LanguageIndex {
+    param([string]$Code)
+
+    switch ($Code.ToLowerInvariant()) {
+        'en' { return 1 }
+        'ru' { return 2 }
+        'es' { return 3 }
+        'it' { return 4 }
+        'fr' { return 5 }
+        'de' { return 6 }
+        default { return 1 }
+    }
+}
+
 function Remove-RainmeterUnsafeUnicode {
     param([string]$Text)
     if ([string]::IsNullOrWhiteSpace($Text)) {
@@ -486,6 +500,7 @@ if ($nameClean -eq 'Language') {
 
     $labelClean = if (![string]::IsNullOrWhiteSpace($Label)) { $Label.Trim() } else { Get-LanguageLabel $code }
     $lines = @(Set-IncValue -Lines $lines -Name 'Language' -Value $code)
+    $lines = @(Set-IncValue -Lines $lines -Name 'LanguageIndex' -Value (Get-LanguageIndex $code))
     $lines = @(Set-IncValue -Lines $lines -Name 'LanguageLabel' -Value $labelClean)
     foreach ($entry in (Get-SettingsLabels -Code $code).GetEnumerator()) {
         $lines = @(Set-IncValue -Lines $lines -Name $entry.Key -Value (Convert-SettingsLabel $entry.Value))

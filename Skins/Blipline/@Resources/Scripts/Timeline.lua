@@ -625,13 +625,51 @@ end
 local function find_selected(now)
   if #events == 0 then return 0, timelineText.noEvents, 0 end
 
+  local backgroundActive = nil
+  local backgroundActiveSeconds = 0
+  local backgroundFuture = nil
+  local backgroundFutureSeconds = 0
+  local longActiveThreshold = 86400
+
+  local function is_midnight_placeholder(event)
+    if event.allDay then return true end
+    local startTime = os.date('*t', event.startEpoch)
+    return startTime and startTime.hour == 0 and startTime.min == 0 and startTime.sec == 0
+  end
+
+  local function is_background_focus_event(event)
+    local duration = event.endEpoch - event.startEpoch
+    return event.allDay or duration > longActiveThreshold or is_midnight_placeholder(event)
+  end
+
   for i, event in ipairs(events) do
     if now >= event.startEpoch and now < event.endEpoch then
-      return i, timelineText.ends, event.endEpoch - now
+      if not is_background_focus_event(event) then
+        return i, timelineText.ends, event.endEpoch - now
+      end
+      if not backgroundActive then
+        backgroundActive = i
+        backgroundActiveSeconds = event.endEpoch - now
+      end
     end
     if now < event.startEpoch then
-      return i, timelineText.next, event.startEpoch - now
+      if is_background_focus_event(event) then
+        if not backgroundFuture then
+          backgroundFuture = i
+          backgroundFutureSeconds = event.startEpoch - now
+        end
+      else
+        return i, timelineText.next, event.startEpoch - now
+      end
     end
+  end
+
+  if backgroundFuture then
+    return backgroundFuture, timelineText.next, backgroundFutureSeconds
+  end
+
+  if backgroundActive then
+    return backgroundActive, timelineText.ends, backgroundActiveSeconds
   end
 
   return #events, timelineText.done, 0

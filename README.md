@@ -10,14 +10,14 @@ It includes current/next event focus, a side countdown, smooth scrolling, multi-
 
 ## Download
 
-Current beta: `v0.3.18-beta.1`
+Current beta: `v0.3.19-beta.1`
 
 Get the `.rmskin` from the [latest GitHub release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
 ## What It Does
 
 - Shows a timeline-style agenda with the current or next event highlighted.
-- Keeps a side countdown tag visible so the next thing is always obvious.
+- Keeps a side countdown tag visible so the next scheduled timed event is obvious, while all-day and long-running items still stay visible in the timeline.
 - Scrolls through cached past and future events with the mouse wheel.
 - Clicks the countdown tag to glide back to the current or next event.
 - Uses a wider two-column Settings panel for display options, color selection, event details, scale, refresh interval, and template controls.
@@ -106,5 +106,5 @@ Use Settings > Display settings to choose English, Russian, Spanish, Italian, Fr
 
 ## Status
 
-`v0.3.18-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
+`v0.3.19-beta.1` is an early beta. It is usable, but still beta. OAuth/Google sign-in calendar selection is not included yet; the current setup path is private iCal import.
 

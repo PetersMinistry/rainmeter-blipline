@@ -96,17 +96,35 @@ function Set-IncValue {
 function Get-LanguageCode {
     param([string[]]$Lines)
 
-    $code = (Get-IncValue -Lines $Lines -Name 'Language' -Default 'en').Trim().ToLowerInvariant()
     $aliases = @{
-        english = 'en'; russian = 'ru'; spanish = 'es'; italian = 'it'; french = 'fr'; german = 'de'
+        english = 'en'; anglais = 'en'; englisch = 'en'; inglese = 'en'; ingles = 'en'
+        russian = 'ru'; russe = 'ru'; russisch = 'ru'; ruso = 'ru'; russo = 'ru'
+        spanish = 'es'; espagnol = 'es'; spanisch = 'es'; spagnolo = 'es'; espanol = 'es'
+        italian = 'it'; italien = 'it'; italienisch = 'it'; italiano = 'it'
+        french = 'fr'; francais = 'fr'; français = 'fr'; franzosisch = 'fr'; französisch = 'fr'; francese = 'fr'
+        german = 'de'; allemand = 'de'; deutsch = 'de'; tedesco = 'de'; aleman = 'de'
     }
-    if ($aliases.ContainsKey($code)) {
-        $code = $aliases[$code]
+
+    $candidates = @(
+        (Get-IncValue -Lines $Lines -Name 'Language' -Default ''),
+        (Get-IncValue -Lines $Lines -Name 'LanguageLabel' -Default '')
+    )
+
+    foreach ($candidate in $candidates) {
+        $code = $candidate.Trim().ToLowerInvariant()
+        if ([string]::IsNullOrWhiteSpace($code)) {
+            continue
+        }
+        $code = $code.Normalize([Text.NormalizationForm]::FormD) -replace '\p{Mn}', ''
+        if ($aliases.ContainsKey($code)) {
+            $code = $aliases[$code]
+        }
+        if ($code -in @('en', 'ru', 'es', 'it', 'fr', 'de')) {
+            return $code
+        }
     }
-    if ($code -notin @('en', 'ru', 'es', 'it', 'fr', 'de')) {
-        $code = 'en'
-    }
-    return $code
+
+    return 'en'
 }
 
 function Get-ImportLabels {

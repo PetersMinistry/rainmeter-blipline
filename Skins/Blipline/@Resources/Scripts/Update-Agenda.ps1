@@ -96,6 +96,16 @@ function Get-BliplineLocale {
     return $locale
 }
 
+function Test-MojibakeText {
+    param([string]$Text)
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return $false
+    }
+
+    return ($Text -match '[ÃÂ�]')
+}
+
 function Get-LocaleText {
     param(
         [hashtable]$Locale,
@@ -1226,12 +1236,14 @@ function Write-AgendaCache {
     $timePattern = if ($timeFormatSetting -match '(?i)^(24|24h|hh:mm|h24|true|1)$') { 'HH:mm' } else { 'h:mm tt' }
     $allDayDefault = Get-LocaleText -Locale $locale -Key 'AllDay'
     $allDaySetting = Get-SettingValue -Path $SettingsPath -Name 'AllDayLabel' -Default ''
-    if ([string]::IsNullOrWhiteSpace($allDaySetting) -or ($locale['Code'] -ne 'en' -and $allDaySetting -eq 'All day')) {
+    if ([string]::IsNullOrWhiteSpace($allDaySetting) -or
+        ($locale['Code'] -ne 'en' -and $allDaySetting -eq 'All day') -or
+        (Test-MojibakeText $allDaySetting)) {
         $allDaySetting = $allDayDefault
     }
-    $allDayLabel = Convert-DisplayText $allDaySetting
+    $allDayLabel = Convert-RainmeterText $allDaySetting
     if ([string]::IsNullOrWhiteSpace($allDayLabel)) {
-        $allDayLabel = $allDayDefault
+        $allDayLabel = Convert-RainmeterText $allDayDefault
     }
     $untitledLabel = Get-LocaleText -Locale $locale -Key 'Untitled'
 

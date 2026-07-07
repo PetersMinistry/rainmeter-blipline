@@ -6,6 +6,11 @@
 
 $ErrorActionPreference = 'Stop'
 
+$localizationScript = Join-Path $PSScriptRoot 'Localization.ps1'
+if (Test-Path -LiteralPath $localizationScript) {
+    . $localizationScript
+}
+
 # Ensure modern TLS protocols are enabled for network requests (fixes connection issues on older Windows machines)
 try {
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 -bor 3072
@@ -26,73 +31,19 @@ function Get-RainmeterIncludeEncoding {
     return [System.Text.Encoding]::Default
 }
 
-$BliplineLocales = [ordered]@{
-    en = @{
-        Name = 'English'; Culture = 'en-US'; AllDay = 'All day'; Untitled = '(Untitled)'
-        NoEvents = 'No events'; Ends = 'ENDS'; Next = 'NEXT'; Done = 'DONE'
-        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'hr'; UnitHourSuffix = 'h'; UnitDay = 'day'; UnitDayPlural = 'days'; UnitDaySuffix = 'd'; UnitJoiner = ''
-        SampleData = 'Sample data'; DemoData = 'Demo data'; NoFeedsConfigured = 'No feeds configured'
-        RefreshFailedSampleData = 'Refresh failed - sample data'
-        UpdatedFeeds = 'Updated {0} feed(s)'; UpdatedFeedsFailed = 'Updated {0} feed(s), {1} failed'; ZeroUpdated = '0 of {0} feed(s) updated'
-    }
-    ru = @{
-        Name = 'Russian'; Culture = 'en-US'; AllDay = 'Ves den'; Untitled = '(Bez nazvaniya)'
-        NoEvents = 'Net sobytiy'; Ends = 'KONETS'; Next = 'DALEE'; Done = 'GOTOVO'
-        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'ch'; UnitHourSuffix = 'ch'; UnitDay = 'den'; UnitDayPlural = 'dney'; UnitDaySuffix = 'd'; UnitJoiner = 'space'
-        SampleData = 'Primer dannyh'; DemoData = 'Demo'; NoFeedsConfigured = 'Lenty ne nastroeny'
-        RefreshFailedSampleData = 'Sboy obnovleniya - primer'
-        UpdatedFeeds = 'Obnovleno: {0}'; UpdatedFeedsFailed = 'Obnovleno: {0}, oshibok: {1}'; ZeroUpdated = 'Obnovleno 0 iz {0}'
-    }
-    es = @{
-        Name = 'Spanish'; Culture = 'es-ES'; AllDay = 'Todo el día'; Untitled = '(Sin título)'
-        NoEvents = 'Sin eventos'; Ends = 'FIN'; Next = 'SIGUE'; Done = 'HECHO'
-        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'día'; UnitDayPlural = 'días'; UnitDaySuffix = 'd'; UnitJoiner = 'space'
-        SampleData = 'Datos de ejemplo'; DemoData = 'Demo'; NoFeedsConfigured = 'Sin fuentes'
-        RefreshFailedSampleData = 'Error - datos de ejemplo'
-        UpdatedFeeds = '{0} fuente(s) actualizada(s)'; UpdatedFeedsFailed = '{0} fuente(s) actualizada(s), {1} error'; ZeroUpdated = '0 de {0} fuente(s) actualizada(s)'
-    }
-    it = @{
-        Name = 'Italian'; Culture = 'it-IT'; AllDay = 'Tutto il giorno'; Untitled = '(Senza titolo)'
-        NoEvents = 'Nessun evento'; Ends = 'FINISCE'; Next = 'PROSSIMO'; Done = 'FATTO'
-        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'giorno'; UnitDayPlural = 'giorni'; UnitDaySuffix = 'g'; UnitJoiner = 'space'
-        SampleData = 'Dati di esempio'; DemoData = 'Demo'; NoFeedsConfigured = 'Nessun feed'
-        RefreshFailedSampleData = 'Errore - dati di esempio'
-        UpdatedFeeds = '{0} feed aggiornati'; UpdatedFeedsFailed = '{0} feed aggiornati, {1} errori'; ZeroUpdated = '0 di {0} feed aggiornati'
-    }
-    fr = @{
-        Name = 'French'; Culture = 'fr-FR'; AllDay = 'Toute la journée'; Untitled = '(Sans titre)'
-        NoEvents = 'Aucun événement'; Ends = 'FIN'; Next = 'SUIVANT'; Done = 'TERMINÉ'
-        UnitMinute = 'min'; UnitMinuteSuffix = 'm'; UnitHour = 'h'; UnitHourSuffix = 'h'; UnitDay = 'jour'; UnitDayPlural = 'jours'; UnitDaySuffix = 'j'; UnitJoiner = 'space'
-        SampleData = 'Données de test'; DemoData = 'Démo'; NoFeedsConfigured = 'Aucun flux'
-        RefreshFailedSampleData = 'Échec - données de test'
-        UpdatedFeeds = '{0} flux actualisé(s)'; UpdatedFeedsFailed = '{0} flux actualisé(s), {1} échec(s)'; ZeroUpdated = '0 sur {0} flux actualisé(s)'
-    }
-    de = @{
-        Name = 'German'; Culture = 'de-DE'; AllDay = 'Ganztägig'; Untitled = '(Ohne Titel)'
-        NoEvents = 'Keine Ereignisse'; Ends = 'ENDET'; Next = 'NÄCHSTES'; Done = 'FERTIG'
-        UnitMinute = 'Min'; UnitMinuteSuffix = 'm'; UnitHour = 'Std'; UnitHourSuffix = 'h'; UnitDay = 'Tag'; UnitDayPlural = 'Tage'; UnitDaySuffix = 'T'; UnitJoiner = 'space'
-        SampleData = 'Beispieldaten'; DemoData = 'Demo'; NoFeedsConfigured = 'Keine Feeds eingerichtet'
-        RefreshFailedSampleData = 'Aktualisierung fehlgeschlagen - Beispiel'
-        UpdatedFeeds = '{0} Feed(s) aktualisiert'; UpdatedFeedsFailed = '{0} Feed(s) aktualisiert, {1} fehlgeschlagen'; ZeroUpdated = '0 von {0} Feed(s) aktualisiert'
-    }
-}
 
 function Get-BliplineLocale {
     param([string]$Path)
 
-    $code = (Get-SettingValue -Path $Path -Name 'Language' -Default 'en').Trim().ToLowerInvariant()
-    $aliases = @{
-        english = 'en'; russian = 'ru'; spanish = 'es'; italian = 'it'; french = 'fr'; german = 'de'
+    $settingCode = Get-SettingValue -Path $Path -Name 'Language' -Default 'en'
+    $code = Resolve-BliplineLanguageCode -Code $settingCode -Fallback 'en'
+    $pack = Get-BliplineLocalePack -Code $code
+    $locale = @{
+        Code = Get-BliplineLocaleValue -Pack $pack -Section 'Meta' -Key 'Code' -Default $code
+        Name = Get-BliplineLocaleValue -Pack $pack -Section 'Meta' -Key 'Name' -Default 'English'
+        Culture = Get-BliplineLocaleValue -Pack $pack -Section 'Meta' -Key 'Culture' -Default 'en-US'
+        Text = Get-BliplineLocaleSection -Code $code -Section 'Timeline'
     }
-    if ($aliases.ContainsKey($code)) {
-        $code = $aliases[$code]
-    }
-    if (!$BliplineLocales.Contains($code)) {
-        $code = 'en'
-    }
-
-    $locale = @{} + $BliplineLocales[$code]
-    $locale['Code'] = $code
     return $locale
 }
 
@@ -112,11 +63,16 @@ function Get-LocaleText {
         [string]$Key
     )
 
-    if ($Locale.ContainsKey($Key)) {
-        return [string]$Locale[$Key]
+    if ($Locale.ContainsKey('Text') -and $Locale['Text'].Contains($Key)) {
+        return [string]$Locale['Text'][$Key]
     }
 
-    return [string]$BliplineLocales['en'][$Key]
+    $fallback = Get-BliplineLocaleSection -Code 'en' -Section 'Timeline'
+    if ($fallback.Contains($Key)) {
+        return [string]$fallback[$Key]
+    }
+
+    return ''
 }
 
 function Convert-StatusText {

@@ -1,5 +1,20 @@
 # Blipline Changelog
 
+## Unreleased
+
+Localization architecture hardening.
+
+### Added
+
+- Adds UTF-8 language pack files under `@Resources/Locales` for English, Russian, Spanish, Italian, French, and German.
+- Adds a shared `Localization.ps1` loader for Settings, Calendar Import, and Timeline strings.
+- Adds `tools/Test-Localization.ps1` to catch missing translation keys, unexpected typo keys, mojibake markers, and locale file encoding mistakes.
+
+### Changed
+
+- Moves Settings labels, Calendar Import status text, and Timeline/countdown labels out of embedded script tables and into the locale packs.
+- Resolves available language codes from locale files so future language packs can be added with less script churn.
+
 ## 0.3.19 Beta - 2026-07-06
 
 Countdown focus and localization review fixes.

@@ -93,6 +93,12 @@ Location and notes are read from each calendar event's Location and Description/
 
 Use Settings > Display settings to choose English, Russian, Spanish, Italian, French, or German, and to switch between 12-hour and 24-hour event times. Language and clock changes update the Settings panel and the timeline cache immediately, so the visible calendar should not need a feed refresh just to reformat labels.
 
+## Language Packs
+
+Blipline language text lives in `Skins/Blipline/@Resources/Locales/*.ini`. English is the reference pack; other packs must keep the same sections and keys. The shared `Localization.ps1` loader handles fallback, aliases, accents, and Rainmeter-safe output for Settings, Calendar Import, and Timeline labels.
+
+Run `tools/Test-Localization.ps1` after editing or adding a language pack. It checks required keys, unexpected typo keys, UTF-8 BOM encoding, mojibake markers, and a few accent-sensitive labels.
+
 ## Privacy
 
 - Your private iCal URLs stay in your local Rainmeter skin settings.

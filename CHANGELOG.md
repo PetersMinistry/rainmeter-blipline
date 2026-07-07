@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-Localization architecture hardening.
+No unreleased changes.
+
+## 0.3.20 Beta - 2026-07-07
+
+Localization architecture hardening and Settings click fixes.
 
 ### Added
 
@@ -14,6 +18,13 @@ Localization architecture hardening.
 
 - Moves Settings labels, Calendar Import status text, and Timeline/countdown labels out of embedded script tables and into the locale packs.
 - Resolves available language codes from locale files so future language packs can be added with less script churn.
+
+### Fixed
+
+- Applies language, clock format, and refresh interval Settings clicks through a hidden launcher so no terminal window flashes on each option click.
+- Fixes a corrupted localization parser marker that could stop language and clock clicks before settings were saved.
+- Translates persisted Calendar Import status messages when changing languages, including legacy timestamped messages such as `Cleared feeds at 9:05`.
+- Keeps the Calendar Import panel from showing stale English validation text after switching to another language.
 
 ## 0.3.19 Beta - 2026-07-06
 

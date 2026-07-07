@@ -137,28 +137,87 @@ function Get-SettingsLabels {
     return Get-BliplineLocaleSection -Code $resolvedCode -Section 'Settings'
 }
 
-function Find-ImportTextKey {
+function Convert-ImportTemplateToRegex {
+    param([string]$Text)
+
+    $pattern = [regex]::Escape((Convert-SettingsLabel $Text))
+    return '^' + ($pattern -replace '\\\{[0-9]+\\\}', '(.+?)') + '$'
+}
+
+function Format-ImportLabel {
+    param(
+        [hashtable]$Labels,
+        [string]$Key,
+        [object[]]$FormatArgs = @()
+    )
+
+    if (!$Labels.Contains($Key)) {
+        return ''
+    }
+
+    $text = [string]$Labels[$Key]
+    if ($FormatArgs.Count -gt 0) {
+        try {
+            return ($text -f $FormatArgs)
+        } catch {
+            return $text
+        }
+    }
+
+    return $text
+}
+
+function Find-ImportTextMatch {
     param([string]$Text)
 
     if ([string]::IsNullOrWhiteSpace($Text)) {
-        return ''
+        return $null
     }
 
     $cleanText = Convert-SettingsLabel $Text
     foreach ($languageCode in @(Get-BliplineAvailableLanguageCodes)) {
         $labels = Get-BliplineLocaleSection -Code $languageCode -Section 'Import'
         foreach ($entry in $labels.GetEnumerator()) {
-            if ($entry.Value -match '\{[0-9]+\}') {
+            if ([string]$entry.Value -match '\{[0-9]+\}') {
                 continue
             }
 
             if ($cleanText -eq (Convert-SettingsLabel $entry.Value)) {
-                return $entry.Key
+                return @{
+                    Key = $entry.Key
+                    FormatArgs = @()
+                }
+            }
+        }
+
+        foreach ($entry in $labels.GetEnumerator()) {
+            if ([string]$entry.Value -notmatch '\{[0-9]+\}') {
+                continue
+            }
+
+            $match = [regex]::Match($cleanText, (Convert-ImportTemplateToRegex $entry.Value))
+            if ($match.Success) {
+                $args = @()
+                for ($i = 1; $i -lt $match.Groups.Count; $i++) {
+                    $args += $match.Groups[$i].Value
+                }
+                return @{
+                    Key = $entry.Key
+                    FormatArgs = $args
+                }
             }
         }
     }
 
-    return ''
+    $legacyClearedMatch = [regex]::Match($cleanText, '^Cleared feeds at (.+)$')
+    if ($legacyClearedMatch.Success) {
+        return @{
+            Key = 'Cleared'
+            FormatArgs = @($legacyClearedMatch.Groups[1].Value)
+        }
+    }
+
+    return $null
 }
 
 function Update-PersistedImportText {
@@ -168,9 +227,10 @@ function Update-PersistedImportText {
         [hashtable]$Labels
     )
 
-    $key = Find-ImportTextKey -Text (Get-IncValue -Lines $Lines -Name $Name)
-    if (![string]::IsNullOrWhiteSpace($key) -and $Labels.Contains($key)) {
-        return @(Set-IncValue -Lines $Lines -Name $Name -Value (Convert-SettingsLabel $Labels[$key]))
+    $match = Find-ImportTextMatch -Text (Get-IncValue -Lines $Lines -Name $Name)
+    if ($null -ne $match -and $Labels.Contains($match.Key)) {
+        $translated = Format-ImportLabel -Labels $Labels -Key $match.Key -FormatArgs $match.FormatArgs
+        return @(Set-IncValue -Lines $Lines -Name $Name -Value (Convert-SettingsLabel $translated))
     }
 
     return @($Lines)

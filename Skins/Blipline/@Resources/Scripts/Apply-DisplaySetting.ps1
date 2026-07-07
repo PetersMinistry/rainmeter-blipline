@@ -68,6 +68,23 @@ function Set-IncValue {
     return @($updated[0..($insertAt - 1)]) + @($replacement) + @($updated[$insertAt..($updated.Count - 1)])
 }
 
+function Get-IncValue {
+    param(
+        [string[]]$Lines,
+        [string]$Name
+    )
+
+    $pattern = '^' + [regex]::Escape($Name) + '=(.*)$'
+    foreach ($line in $Lines) {
+        $match = [regex]::Match($line, $pattern)
+        if ($match.Success) {
+            return $match.Groups[1].Value
+        }
+    }
+
+    return ''
+}
+
 function Get-LanguageLabel {
     param([string]$Code)
 
@@ -120,6 +137,45 @@ function Get-SettingsLabels {
     return Get-BliplineLocaleSection -Code $resolvedCode -Section 'Settings'
 }
 
+function Find-ImportTextKey {
+    param([string]$Text)
+
+    if ([string]::IsNullOrWhiteSpace($Text)) {
+        return ''
+    }
+
+    $cleanText = Convert-SettingsLabel $Text
+    foreach ($languageCode in @(Get-BliplineAvailableLanguageCodes)) {
+        $labels = Get-BliplineLocaleSection -Code $languageCode -Section 'Import'
+        foreach ($entry in $labels.GetEnumerator()) {
+            if ($entry.Value -match '\{[0-9]+\}') {
+                continue
+            }
+
+            if ($cleanText -eq (Convert-SettingsLabel $entry.Value)) {
+                return $entry.Key
+            }
+        }
+    }
+
+    return ''
+}
+
+function Update-PersistedImportText {
+    param(
+        [string[]]$Lines,
+        [string]$Name,
+        [hashtable]$Labels
+    )
+
+    $key = Find-ImportTextKey -Text (Get-IncValue -Lines $Lines -Name $Name)
+    if (![string]::IsNullOrWhiteSpace($key) -and $Labels.Contains($key)) {
+        return @(Set-IncValue -Lines $Lines -Name $Name -Value (Convert-SettingsLabel $Labels[$key]))
+    }
+
+    return @($Lines)
+}
+
 if ([string]::IsNullOrWhiteSpace($SettingsPath) -or !(Test-Path -LiteralPath $SettingsPath)) {
     exit 1
 }
@@ -143,6 +199,10 @@ if ($nameClean -eq 'Language') {
     foreach ($entry in (Get-SettingsLabels -Code $code).GetEnumerator()) {
         $lines = @(Set-IncValue -Lines $lines -Name $entry.Key -Value (Convert-SettingsLabel $entry.Value))
     }
+
+    $importLabels = Get-BliplineLocaleSection -Code $code -Section 'Import'
+    $lines = @(Update-PersistedImportText -Lines $lines -Name 'FeedImportStatus' -Labels $importLabels)
+    $lines = @(Update-PersistedImportText -Lines $lines -Name 'FeedStatusSummary' -Labels $importLabels)
 }
 elseif ($nameClean -eq 'TimeFormat') {
     $format = if ($valueClean -match '^(24|24h|hh:mm|h24|true|1)$') { '24' } else { '12' }

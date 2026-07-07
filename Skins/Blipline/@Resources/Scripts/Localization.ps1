@@ -249,5 +249,12 @@ function Test-BliplineMojibakeText {
         return $false
     }
 
-    return ($Text -match '[ÃÂ�]')
+    $badMarkers = @([char]0x00C3, [char]0x00C2, [char]0x00EF, [char]0x00BF, [char]0x00BD)
+    foreach ($marker in $badMarkers) {
+        if ($Text.IndexOf($marker) -ge 0) {
+            return $true
+        }
+    }
+
+    return $false
 }

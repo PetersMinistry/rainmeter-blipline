@@ -13,6 +13,7 @@ Multi-day event display fix.
 - Expands any event that spans more than one calendar day into daily display slices, not just `VALUE=DATE` all-day events. Previously a multi-day event with real start/end times (e.g. a vacation from 2:30pm one day to 3:00pm weeks later) rendered once at the top and never repeated on the days it covered.
 - Each daily slice is treated as a background all-day event, so the countdown tag still points at the next real scheduled timed appointment instead of locking onto the long event's end.
 - Adds a regression test (`Timed Vacation` fixture) to `tools/Test-AgendaPipeline.ps1` covering timed multi-day expansion.
+- Writes the generated agenda cache as Rainmeter-safe BOM-free ANSI/cp1252 so French and Spanish all-day labels render correctly (`Toute la journée`, `Todo el día`) instead of mojibake such as `Toute la journÃ©e` / `Todo el dÃa`.
 
 ## 0.3.20 Beta - 2026-07-07
 

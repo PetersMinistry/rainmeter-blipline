@@ -1262,8 +1262,11 @@ function Write-AgendaCache {
         $lines.Add(("Event{0}Color={1}" -f $n, $color))
     }
 
-    $utf8Bom = New-Object System.Text.UTF8Encoding($true)
-    [System.IO.File]::WriteAllLines($Path, [string[]]$lines, $utf8Bom)
+    # Rainmeter @Include variable files are safest as BOM-free ANSI/cp1252.
+    # UTF-8 (with or without BOM) renders accented text as mojibake in this skin,
+    # and UTF-16 LE makes the included variables disappear in Rainmeter.
+    $includeEncoding = Get-RainmeterIncludeEncoding
+    [System.IO.File]::WriteAllLines($Path, [string[]]$lines, $includeEncoding)
 }
 
 try {

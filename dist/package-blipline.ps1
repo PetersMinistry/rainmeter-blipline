@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$version = '0.3.20'
+$version = '0.3.21'
 $dist = $PSScriptRoot
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $zipPath = Join-Path $dist "Blipline_$version-beta.zip"

@@ -710,7 +710,14 @@ function Expand-DisplayEvent {
         [datetime]$WindowEnd
     )
 
-    if (!$Event.AllDay -or $Event.End.Date -le $Event.Start.Date.AddDays(1)) {
+    # Slice any event that spans more than one calendar day into daily display
+    # slices. This covers both true all-day events (DTSTART;VALUE=DATE) and
+    # multi-day events that carry real start/end times (e.g. a vacation from
+    # 2:30pm one day to 3:00pm weeks later). Previously only AllDay-flagged
+    # events were sliced, so timed multi-day events rendered once at the top
+    # and never repeated on subsequent days.
+    $spansMultipleDays = $Event.End.Date -gt $Event.Start.Date
+    if (!$spansMultipleDays) {
         return @($Event)
     }
 

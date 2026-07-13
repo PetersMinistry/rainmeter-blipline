@@ -4,6 +4,18 @@
 
 No unreleased changes.
 
+## 0.3.22 Beta - 2026-07-13
+
+Overnight event and calendar refresh reliability fix.
+
+### Fixed
+
+- Keeps timed events timed when they cross midnight, so an event from 8:30 PM to 5:30 AM retains those times instead of becoming an all-day row.
+- Restricts daily all-day expansion to true `VALUE=DATE` events, correcting the 0.3.21 behavior that converted every cross-date timed event into all-day slices and could multiply work on large recurring feeds.
+- Replaces the unbounded first feed download with a single 25-second HTTP request that handles redirects, compression, response validation, and calendar text decoding.
+- Saves feed results after each calendar finishes so completed feeds retain `OK` or `Failed` status even when a later private feed is slow or unavailable.
+- Removes the temporary Python fetch-helper path from calendar refreshes.
+
 ## 0.3.21 Beta - 2026-07-08
 
 Multi-day event display fix.

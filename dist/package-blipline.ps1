@@ -1,14 +1,18 @@
 $ErrorActionPreference = 'Stop'
 
-$version = '0.3.21'
+$version = '0.3.22'
 $dist = $PSScriptRoot
 $projectRoot = Split-Path -Parent $PSScriptRoot
+$gitDir = if (Test-Path -LiteralPath (Join-Path $projectRoot '.git-meta')) { '.git-meta' } else { '.git' }
 $zipPath = Join-Path $dist "Blipline_$version-beta.zip"
 $rmskinPath = Join-Path $dist "Blipline_$version-beta.rmskin"
 
 Push-Location $projectRoot
 try {
-    git --git-dir=.git-meta --work-tree=. archive --format=zip HEAD Skins/Blipline -o $zipPath
+    git --git-dir=$gitDir --work-tree=. archive --format=zip HEAD Skins/Blipline -o $zipPath
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Unable to create the Blipline release archive.'
+    }
 }
 finally {
     Pop-Location

@@ -710,14 +710,9 @@ function Expand-DisplayEvent {
         [datetime]$WindowEnd
     )
 
-    # Slice any event that spans more than one calendar day into daily display
-    # slices. This covers both true all-day events (DTSTART;VALUE=DATE) and
-    # multi-day events that carry real start/end times (e.g. a vacation from
-    # 2:30pm one day to 3:00pm weeks later). Previously only AllDay-flagged
-    # events were sliced, so timed multi-day events rendered once at the top
-    # and never repeated on subsequent days.
-    $spansMultipleDays = $Event.End.Date -gt $Event.Start.Date
-    if (!$spansMultipleDays) {
+    # Only VALUE=DATE events become daily all-day slices. Timed events must
+    # retain their real times when they cross midnight.
+    if (!$Event.AllDay -or $Event.End.Date -le $Event.Start.Date.AddDays(1)) {
         return @($Event)
     }
 
@@ -992,58 +987,29 @@ function Get-CalendarContent {
         return Get-Content -LiteralPath $Source -Raw -Encoding UTF8
     }
 
+    Add-Type -AssemblyName System.Net.Http
+    $handler = New-Object System.Net.Http.HttpClientHandler
+    $client = $null
     try {
-        $client = New-Object System.Net.WebClient
-        $client.Headers.Add('User-Agent', 'Blipline/0.3')
-        $client.Headers.Add('Accept', 'text/calendar,text/plain,*/*')
-        return Convert-BytesToText ($client.DownloadData($Source))
-    }
-    catch {
+        $handler.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
+        $client = New-Object System.Net.Http.HttpClient($handler)
+        $client.Timeout = [TimeSpan]::FromSeconds(25)
+        $client.DefaultRequestHeaders.UserAgent.ParseAdd('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Blipline/0.3')
+        $client.DefaultRequestHeaders.Accept.ParseAdd('text/calendar,text/plain,*/*')
+        $response = $null
         try {
-            Add-Type -AssemblyName System.Net.Http
-            $client = New-Object System.Net.Http.HttpClient
-            $client.Timeout = [TimeSpan]::FromSeconds(25)
-            $client.DefaultRequestHeaders.UserAgent.ParseAdd('Blipline/0.3')
-            return $client.GetStringAsync($Source).GetAwaiter().GetResult()
+            $response = $client.GetAsync($Source).GetAwaiter().GetResult()
+            [void]$response.EnsureSuccessStatusCode()
+            $bytes = $response.Content.ReadAsByteArrayAsync().GetAwaiter().GetResult()
+            return Convert-BytesToText $bytes
         }
-        catch {
-            $helperPath = Get-SettingValue -Path $SettingsPath -Name 'FetchHelperPath'
-            if ([string]::IsNullOrWhiteSpace($helperPath) -or !(Test-Path -LiteralPath $helperPath)) {
-                throw
-            }
-
-            $tempScript = Join-Path $env:TEMP ('BliplineFetch-' + [guid]::NewGuid().ToString('N') + '.py')
-            $tempFile = Join-Path $env:TEMP ('BliplineFeed-' + [guid]::NewGuid().ToString('N') + '.ics')
-            Set-Content -LiteralPath $tempScript -Encoding UTF8 -Value @'
-import sys
-import urllib.request
-
-url = sys.argv[1]
-out_file = sys.argv[2]
-request = urllib.request.Request(
-    url,
-    headers={
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Blipline/0.3",
-        "Accept": "text/calendar,text/plain,*/*",
-    },
-)
-with urllib.request.urlopen(request, timeout=25) as response:
-    data = response.read()
-with open(out_file, "wb") as handle:
-    handle.write(data)
-'@
-            try {
-                & $helperPath $tempScript $Source $tempFile
-                if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $tempFile)) {
-                    throw 'Fetch helper failed'
-                }
-                return Get-Content -LiteralPath $tempFile -Raw -Encoding UTF8
-            }
-            finally {
-                Remove-Item -LiteralPath $tempScript -Force -ErrorAction SilentlyContinue
-                Remove-Item -LiteralPath $tempFile -Force -ErrorAction SilentlyContinue
-            }
+        finally {
+            if ($null -ne $response) { $response.Dispose() }
         }
+    }
+    finally {
+        if ($null -ne $client) { $client.Dispose() }
+        if ($null -ne $handler) { $handler.Dispose() }
     }
 }
 
@@ -1308,10 +1274,24 @@ try {
 
     $allEvents = New-Object System.Collections.Generic.List[object]
     $feedStatuses = New-Object System.Collections.Generic.List[object]
+    $progressSummary = Get-SettingValue -Path $SettingsPath -Name 'FeedStatusSummary' -Default ("Refreshing {0} feed(s)" -f $feeds.Count)
+    foreach ($feed in $feeds) {
+        $savedName = Get-SettingValue -Path $SettingsPath -Name ("Feed{0}Name" -f $feed.Index)
+        $savedResult = Get-SettingValue -Path $SettingsPath -Name ("Feed{0}Result" -f $feed.Index) -Default 'Pending refresh'
+        $savedCount = Get-SettingValue -Path $SettingsPath -Name ("Feed{0}Count" -f $feed.Index)
+        $feedStatuses.Add([pscustomobject]@{
+            Index = $feed.Index
+            Name = if (![string]::IsNullOrWhiteSpace($savedName)) { $savedName } else { $feed.FallbackName }
+            Result = $savedResult
+            Count = $savedCount
+            Color = $feed.Color
+        })
+    }
     $successCount = 0
     $failureCount = 0
 
     foreach ($feed in $feeds) {
+        $feedStatus = @($feedStatuses | Where-Object { $_.Index -eq $feed.Index } | Select-Object -First 1)[0]
         try {
             $content = Get-CalendarContent -Source $feed.Url
             $calendarName = $feed.Name
@@ -1326,25 +1306,24 @@ try {
             $calendarColor = if (![string]::IsNullOrWhiteSpace($feed.Color) -and $feed.Color -ne '255,255,255,0') { $feed.Color } elseif (![string]::IsNullOrWhiteSpace($detectedColor)) { $detectedColor } else { $feed.Color }
             $events = Parse-IcsEvents -Content $content -CalendarName $calendarName -Color $calendarColor -WindowStart $parseWindowStart -WindowEnd $parseWindowEnd
             foreach ($event in $events) { $allEvents.Add($event) }
-            $feedStatuses.Add([pscustomobject]@{
-                Index = $feed.Index
-                Name = $calendarName
-                Result = 'OK'
-                Count = @($events).Count
-                Color = $calendarColor
-            })
+            $feedStatus.Name = $calendarName
+            $feedStatus.Result = 'OK'
+            $feedStatus.Count = @($events).Count
+            $feedStatus.Color = $calendarColor
             $successCount++
         }
         catch {
-            $feedStatuses.Add([pscustomobject]@{
-                Index = $feed.Index
-                Name = if (![string]::IsNullOrWhiteSpace($feed.Name)) { $feed.Name } else { $feed.FallbackName }
-                Result = 'Failed'
-                Count = 0
-                Color = $feed.Color
-            })
+            $feedStatus.Name = if (![string]::IsNullOrWhiteSpace($feed.Name)) { $feed.Name } else { $feed.FallbackName }
+            $feedStatus.Result = 'Failed'
+            $feedStatus.Count = 0
+            $feedStatus.Color = $feed.Color
             $failureCount++
         }
+
+        try {
+            Save-FeedStatus -Path $SettingsPath -Statuses $feedStatuses.ToArray() -MaxFeeds $maxStatusFeeds -Summary $progressSummary
+        }
+        catch {}
     }
 
     if ($successCount -eq 0) {

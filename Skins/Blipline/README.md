@@ -28,6 +28,8 @@ The wider Settings panel includes display options, detected calendar colors, a 2
 
 Location and notes come from the calendar event Location and Description/Notes fields. Enabled details share one clipped timeline detail line, so very long text may shorten with ellipsis. Unsupported inline emoji are normalized before display, while common visual markers can still become Blipline event badges.
 
+Timed events retain their real start and end times when they cross midnight. True multi-day all-day events remain visible as daily all-day rows. Feed downloads use a bounded request and save results per calendar so one unavailable feed cannot leave every imported calendar pending indefinitely.
+
 Use Settings > Display settings to choose English, Russian, Spanish, Italian, French, or German, and to switch between 12-hour and 24-hour clock formats. Language and clock changes update Settings and the generated timeline cache immediately, including timeline labels and the countdown tag.
 
 Use Settings > Timeline scale for minus, plus, `Reset 100%`, or typed percent resizing. Use Settings > Refresh interval to choose 1, 5, 10, or 15 minute refresh checks. Timeline event dots, divider dots, connector dots, and active-event glow are centered on the timeline rule.

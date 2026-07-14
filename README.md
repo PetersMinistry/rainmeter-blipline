@@ -81,30 +81,6 @@ The beta package opens the settings panel first so new users can import feeds, p
 
 ![Blipline settings panel](docs/screenshots/blipline-settings.png)
 
-## Google Calendar Setup
-
-In Google Calendar, copy each calendar's Secret address in iCal format. In Blipline settings, click Add Calendars to open the Calendar Import panel, then copy one iCal link or several links to the clipboard and click Add iCal Link(s).
-
-Adding links is additive: existing calendars stay in place, duplicate links are skipped, and new links fill the next open feed slots. Use the Remove buttons in the Calendar Import panel to remove individual calendars.
-
-Private iCal URLs are secret read-only links. Anyone with one can read that calendar feed, so do not post them publicly.
-
-Use Settings > Timeline scale to resize Blipline with minus, plus, `Reset 100%`, or a typed percent value. Use Settings > Refresh interval to choose how often Blipline checks calendar feeds.
-
-Location and notes are read from each calendar event's Location and Description/Notes fields. Enabled details share one clipped timeline detail line, so very long calendar, location, or note text may be shortened with ellipsis.
-
-Use Settings > Display settings to choose English, Russian, Spanish, Italian, French, or German, and to switch between 12-hour and 24-hour event times. Language and clock changes update the Settings panel and the timeline cache immediately, so the visible calendar should not need a feed refresh just to reformat labels.
-
-## Language Packs
-
-Blipline language text lives in `Skins/Blipline/@Resources/Locales/*.ini`. English is the reference pack; other packs must keep the same sections and keys. The shared `Localization.ps1` loader handles fallback, aliases, accents, and Rainmeter-safe output for Settings, Calendar Import, and Timeline labels.
-
-Run `tools/Test-Localization.ps1` after editing or adding a language pack. It checks required keys, unexpected typo keys, UTF-8 BOM encoding, mojibake markers, and a few accent-sensitive labels.
-
-## Privacy
-
-- Your private iCal URLs stay in your local Rainmeter skin settings.
-- Agenda cache files stay local because they can include event titles, locations, and notes.
 
 ## Requirements
 

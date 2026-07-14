@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
-$version = '0.3.22'
+$version = '0.3.23'
 $dist = $PSScriptRoot
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $gitDir = if (Test-Path -LiteralPath (Join-Path $projectRoot '.git-meta')) { '.git-meta' } else { '.git' }

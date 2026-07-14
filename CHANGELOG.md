@@ -4,6 +4,14 @@
 
 No unreleased changes.
 
+## 0.3.23 Beta - 2026-07-14
+
+Calendar loading reliability fix.
+
+### Fixed
+
+- Waits for calendar loading to finish before refreshing the Settings or Add Calendars window. Previously, Blipline could stop a refresh too early and leave feeds stuck at `pending refresh`, especially with larger calendars.
+
 ## 0.3.22 Beta - 2026-07-13
 
 Overnight event and calendar refresh reliability fix.

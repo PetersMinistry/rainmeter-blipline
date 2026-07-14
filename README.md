@@ -53,7 +53,7 @@ Install the `.rmskin`, then open the Blipline Settings panel:
 Blipline\Control\Settings.ini
 ```
 
-![Blipline Settings](docs/screenshots/blipline-settings.png)
+![Blipline main Settings panel](docs/screenshots/blipline-settings-main.png)
 
 From Settings, you can add calendars, choose a layout, adjust the timeline size, and decide how often Blipline refreshes.
 
@@ -74,7 +74,7 @@ Then:
 3. Select **Add iCal Link(s)**.
 4. Return to Settings to pick colors, a layout, and your preferred display options.
 
-![Add Calendars](docs/screenshots/blipline-add-calendars.png)
+![Blipline Add Calendars panel](docs/screenshots/blipline-settings-calendars.png)
 
 You can add feeds later, remove individual calendars, or clear the whole list and start fresh.
 

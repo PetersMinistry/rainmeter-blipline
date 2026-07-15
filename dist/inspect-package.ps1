@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$zipPath = Join-Path $PSScriptRoot 'Blipline_0.3.23-beta.zip'
+$zipPath = Join-Path $PSScriptRoot 'Blipline_0.3.24-beta.zip'
 $zip = [System.IO.Compression.ZipFile]::OpenRead($zipPath)
 
 try {

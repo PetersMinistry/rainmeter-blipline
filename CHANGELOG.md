@@ -4,6 +4,16 @@
 
 No unreleased changes.
 
+## 0.3.24 Beta - 2026-07-14
+
+Google Calendar recurrence and large-feed reliability fix.
+
+### Fixed
+
+- Prevents valid Google monthly recurrence rules with non-ordinal or multiple `BYDAY` values from looping through months until the entire feed fails.
+- Allows up to 90 seconds for larger calendar downloads while retaining a bounded request timeout.
+- Shows a short, privacy-safe failure reason such as `download timed out`, `HTTP 403`, or `calendar data error` instead of only `Failed`.
+
 ## 0.3.23 Beta - 2026-07-14
 
 Calendar loading reliability fix.

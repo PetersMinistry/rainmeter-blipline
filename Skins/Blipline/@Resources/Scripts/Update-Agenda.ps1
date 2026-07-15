@@ -649,10 +649,11 @@ function Expand-IcsEvent {
             }
         }
         elseif ($freq -eq 'MONTHLY') {
+            $usesOrdinalByDay = $byDay -match '^[+-]?\d+(?:SU|MO|TU|WE|TH|FR|SA)$'
             do {
                 $candidate = $candidate.AddMonths($interval)
                 $byDayValid = $true
-                if (![string]::IsNullOrWhiteSpace($byDay)) {
+                if ($usesOrdinalByDay) {
                     $adjusted = Get-MonthlyByDayDate -Year $candidate.Year -Month $candidate.Month -ByDay $byDay
                     if ($adjusted) {
                         $candidate = Get-Date -Year $adjusted.Year -Month $adjusted.Month -Day $adjusted.Day `
@@ -662,7 +663,7 @@ function Expand-IcsEvent {
                         $byDayValid = $false
                     }
                 }
-            } while (!$byDayValid -and $guard -lt 1000)
+            } while (!$byDayValid -and $candidate -lt $maxWindow)
         }
         elseif ($freq -eq 'YEARLY') {
             $candidate = $candidate.AddYears($interval)
@@ -993,7 +994,7 @@ function Get-CalendarContent {
     try {
         $handler.AutomaticDecompression = [System.Net.DecompressionMethods]::GZip -bor [System.Net.DecompressionMethods]::Deflate
         $client = New-Object System.Net.Http.HttpClient($handler)
-        $client.Timeout = [TimeSpan]::FromSeconds(25)
+        $client.Timeout = [TimeSpan]::FromSeconds(90)
         $client.DefaultRequestHeaders.UserAgent.ParseAdd('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Blipline/0.3')
         $client.DefaultRequestHeaders.Accept.ParseAdd('text/calendar,text/plain,*/*')
         $response = $null
@@ -1011,6 +1012,43 @@ function Get-CalendarContent {
         if ($null -ne $client) { $client.Dispose() }
         if ($null -ne $handler) { $handler.Dispose() }
     }
+}
+
+function Get-FeedFailureResult {
+    param([System.Exception]$Exception)
+
+    $messages = New-Object System.Collections.Generic.List[string]
+    $current = $Exception
+    while ($null -ne $current) {
+        if (![string]::IsNullOrWhiteSpace($current.Message)) {
+            $messages.Add($current.Message)
+        }
+        $current = $current.InnerException
+    }
+
+    $detail = ($messages -join ' ')
+    if ($detail -match '(?i)timed?\s*out|timeout|task was canceled|operation was canceled') {
+        return 'Failed: download timed out'
+    }
+    if ($detail -match '(?i)response status code[^0-9]*([45][0-9]{2})|\bHTTP[^0-9]*([45][0-9]{2})\b') {
+        $code = if ($matches[1]) { $matches[1] } else { $matches[2] }
+        return "Failed: HTTP $code"
+    }
+    if ($detail -match '(?i)name or service not known|remote name could not be resolved|no such host|connection.*failed|actively refused|SSL|TLS|certificate') {
+        return 'Failed: connection error'
+    }
+    if ($detail -match '(?i)input string.*correct format|calendar|date|recurrence|RRULE') {
+        return 'Failed: calendar data error'
+    }
+
+    $safe = ($detail -replace '(?i)https?://\S+', '[calendar URL]' -replace '[\r\n=]', ' ').Trim()
+    if ([string]::IsNullOrWhiteSpace($safe)) {
+        return 'Failed: unknown error'
+    }
+    if ($safe.Length -gt 34) {
+        $safe = $safe.Substring(0, 31) + '...'
+    }
+    return "Failed: $safe"
 }
 
 function Test-AgendaCacheExists {
@@ -1314,7 +1352,7 @@ try {
         }
         catch {
             $feedStatus.Name = if (![string]::IsNullOrWhiteSpace($feed.Name)) { $feed.Name } else { $feed.FallbackName }
-            $feedStatus.Result = 'Failed'
+            $feedStatus.Result = Get-FeedFailureResult -Exception $_.Exception
             $feedStatus.Count = 0
             $feedStatus.Color = $feed.Color
             $failureCount++

@@ -8,7 +8,7 @@ Connect Google Calendar or any iCal feed, then glance over to see what is happen
 
 ## Download
 
-Current beta: `v0.3.23-beta.1`
+Current beta: `v0.3.24-beta.1`
 
 Download the `.rmskin` from the [latest release](https://github.com/PetersMinistry/rainmeter-blipline/releases/latest).
 
